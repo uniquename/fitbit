@@ -1,0 +1,144 @@
+<?php
+
+/**
+ * @file
+ *  Module file for fitbit user integration.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function fitbit_user_menu() {
+  $items = array();
+  $items['fitbit/auth/%user'] = array(
+    'title' => 'Fitbit User Authorization Callback',
+    'page callback' => 'fitbit_user_auth_callback',
+    'page arguments' => array(2),
+    // @todo: What permissions should this have?
+    'access callback' => 'fitbit_auth_callback_access',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Fitbit authorization page.
+ *
+ * This redirects to Fitbit for authorization
+ * and then gets the access keys.
+ */
+function fitbit_user_auth_callback($account) {
+  global $base_url;
+  $client = fitbit_get_client();
+  // Redirect to fitbit in order for user to allow authentication.
+  if (empty($_GET['oauth_token'])) {
+    $request_token_info = $client->oauth->getRequestToken($client->getParam('requestTokenUrl'), $base_url . '/fitbit/auth/' . $account->uid);
+    $_SESSION['fitbit_request_token'] = $request_token_info;
+    header('Location: ' . $client->getParam('authUrl') . '?oauth_token=' . $request_token_info['oauth_token']);
+    return;
+  }
+  else {
+    // Once fitbit has sent us back here, we get some access tokens for continued use.
+    $request_token = $_GET['oauth_token'];
+    $client->oauth->setToken($request_token, $_SESSION['fitbit_request_token']['oauth_token_secret']);
+    $access_token_info = $client->oauth->getAccessToken($client->getParam('accessTokenUrl'));
+    module_invoke_all('fitbit_authenticate', $account, $access_token_info);
+    unset($_SESSION['fitbit_request_token']);
+    drupal_set_message('Sucessfully authenticated with Fitbit');
+  }
+  drupal_goto('user/' . $account->uid);
+}
+
+/**
+ * Implements hook_fitbit_user_authenticate().
+ */
+function fitbit_user_fitbit_authenticate($account, $access_token_info) {
+  fitbit_user_update_authentication_info($account, $access_token_info);
+}
+
+/**
+ * Implements hook_user_delete().
+ */
+function fitbit_user_user_delete($account) {
+  fitbit_user_delete_tokens($account);
+}
+
+/**
+ * Implements hook_user_delete().
+ */
+function fitbit_user_user_load($accounts) {
+  foreach ($accounts as $account) {
+    fitbit_user_get_tokens($account);
+  }
+}
+
+/**
+ * Update/Add a user's fitbit access credentials.
+ *
+ * @param object $account
+ *  A loaded drupal user object with uid.
+ * @param array $access_token_info
+ *  The data received from getting the oauth access token for a user.
+ *   - encoded_user_id, oauth_token, oauth_token_secret
+ *
+ * @return int
+ *  The merge query status.
+ */
+function fitbit_user_update_authentication_info($account, $access_token_info) {
+  return db_merge('fitbit_user_tokens')
+  ->key(array('uid' => $account->uid))
+  ->fields(array(
+    'uid' => $account->uid,
+    'fitbit_uid' => $access_token_info['encoded_user_id'],
+    'access_token' => $access_token_info['oauth_token'],
+    'access_secret' => $access_token_info['oauth_token_secret'],
+  ))
+  ->execute();
+}
+
+/**
+ * Delete an entry from the access tokens table.
+ *
+ * @param object $account
+ *  A valid loaded druapl user object.
+ *
+ * @return int
+ *  Number of rows deleted (Should be 0 or 1).
+ */
+function fitbit_user_delete_tokens($account) {
+  return db_delete('fitbit_user_tokens')
+  ->condition('uid', $account->uid)
+  ->execute();
+}
+
+/**
+ * Load oauth access tokens with the account.
+ *
+ * @param object $account
+ *  A valid loaded druapl user object.
+ *
+ * @return void
+ */
+function fitbit_user_get_tokens($account) {
+  $account->fitbit_tokens = db_select('fitbit_user_tokens', 'f')
+  ->fields('f')
+  ->condition('uid', $account->uid)
+  ->execute()
+  ->fetchCol();
+}
+
+/**
+ * Add a subscription to a user.
+ *
+ * @param string $collection
+ *  The type of collection for the subscription (activity, food, body...)
+ * @param string $subscription_id
+ *  The id of the existing subscription in your fitbit app.
+ * @param object $account
+ *  Loaded Drupal user account.
+ *
+ * @return
+ */
+function fitbit_user_add_subscription($collection, $subscription_id, $account) {
+  return firbit_add_subscription($collection, $subscription_id, $account->fitbit_tokens['access_token'], $account->fitbit_tokens['access_secret']);
+}

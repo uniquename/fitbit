@@ -1,0 +1,196 @@
+<?php
+
+/**
+ * @file
+ * Main module file for fitbit integration.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function fitbit_menu() {
+  $items = array();
+  $items['admin/config/services/fitbit'] = array(
+    'title' => 'FitBit App Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('fitbit_admin_page'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['fitbit/service'] = array(
+    'page callback' => 'fitbit_service_page',
+    'access callback' => 'fitbit_ip_is_allowed',
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Admin settings form for FitBit App.
+ */
+function fitbit_admin_page() {
+  $form['fitbit_consumer_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('FitBit App Consumer Key'),
+    '#size' => 40,
+    '#maxlength' => 40,
+    '#default_value' => variable_get('fitbit_consumer_key', ''),
+  );
+  $form['fitbit_consumer_secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('FitBit App Consumer Secret'),
+    '#size' => 40,
+    '#maxlength' => 40,
+    '#default_value' => variable_get('fitbit_consumer_secret', ''),
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * @todo Which users do we want to access the auth callback?
+ */
+function fitbit_auth_callback_access() {
+  return !user_is_anonymous();
+}
+
+/**
+ * Retrieve the fitbit client to connect to the fitbit API.
+ *
+ * @param string $consumer_key
+ *  (optional) The application consumer key. Defaults to stored values.
+ * @param string $consumer_secret
+ *  (optional) The application consumer secret . Defaults to stored values.
+ * @param int $debug
+ *  (optional) Whether or not to but oauth into debug mode.
+ * @param string $userAgent
+ *  (optional) See FitBitPHP class.
+ *
+ * @return object
+ *   FitBitPHP object that can integrate with the fitbit API.
+ */
+function fitbit_get_client($consumer_key = NULL, $consumer_secret = NULL, $debug = 1, $userAgent = null) {
+  $client = &drupal_static(__FUNCTION__, NULL);
+  if (empty($client)) {
+    $consumer_key = is_null($consumer_key) ? variable_get('fitbit_consumer_key', '') : $consumer_key;
+    $consumer_secret = is_null($consumer_secret) ? variable_get('fitbit_consumer_secret', '') : $consumer_secret;
+    $client = new FitBitPHP($consumer_key, $consumer_secret, $debug, $userAgent);
+  }
+  return $client;
+}
+
+/**
+ * Make a request to Fitbit.
+ *
+ * This is basically a wrapper for FitBitPHP::customCall().
+ *
+ * @param string $path
+ *  The API path from which to GET/POST data.
+ * @param string $oauth_token
+ *  The access token for connecting to the api.
+ * @param string $oauth_secret
+ *  The access secret for connecting to the api.
+ * @param string $protocol
+ *  The protocol to use (json or xml).
+ *
+ * @return object
+ *  The api response.
+ */
+function fitbit_request($path, $oauth_token, $oauth_secret, $parameters = array(), $method = OAUTH_HTTP_METHOD_GET, $protocol = 'json') {
+  $result = NULL;
+  $client = fitbit_get_client();
+  $client->setOAuthDetails($oauth_token, $oauth_secret);
+  $response = $client->customCall($path . '.' . $protocol, $parameters, $method);
+  // Response code 201 = content created
+  if (in_array($response->code, array(200, 201))) {
+    if ($protocol == 'json') {
+      $result = json_decode($response->response);
+    }
+    else {
+      $result = simplexml_load_string($response);
+    }
+  }
+  // @todo: handle errors
+  return $result;
+}
+
+/**
+ * Add a subscription to a user.
+ *
+ * @param string $collection
+ *  The type of collection for the subscription (activity, food, body...)
+ * @param string $subscription_id
+ *  The id of the existing subscription in your fitbit app.
+ * @param string $oauth_token
+ *  The access token for connecting to the api.
+ * @param string $oauth_secret
+ *  The access secret for connecting to the api.
+ */
+function fitbit_add_subscription($collection, $subscription_id, $oauth_token, $oauth_secret) {
+  $client = fitbit_get_client();
+  $client->setOAuthDetails($oauth_token, $oauth_secret);
+  // @todo: See addSubscription for more options.
+  $path = "user/-/" . $collection . "/apiSubscriptions/" . $subscription_id;
+  return fitbit_request($path, $oauth_token, $oauth_secret, array(), OAUTH_HTTP_METHOD_POST);
+}
+
+/**
+ * Page callback for receiving notifications from fitbit,
+ */
+function fitbit_service_page() {
+  // Report success.
+  // @todo: Fitbit wants us to report success first
+  // and then process the data.
+  drupal_add_http_header('HTTP/1.0 204 No Content', 'Success');
+
+  // Get the data somehow.
+  // @todo: Add some error and security checks on data.
+  $data = json_decode(file_get_contents($_FILES['updates']['tmp_name']));
+  watchdog('fitbit', '<pre>' . print_r($data, TRUE) . '</pre>');
+
+  module_invoke_all('fitbit_receive_data', $data);
+  drupal_exit();
+}
+
+/**
+ * Access callback for determining if this is a fitbit ip.
+ *
+ * @return boolean
+ *  Whether or not the ip is allowed.
+ */
+function fitbit_ip_is_allowed() {
+  // @todo: Won't work properly with a proxy server.
+  $ip = $_SERVER['REMOTE_ADDR'];
+  watchdog('fitbit', 'Connecting from ' . $ip);
+  $allowed_ips = variable_get('fitbit_allowed_ips', array('67.228.35.128/26'));
+  $access = FALSE;
+  if (in_array($ip, $allowed_ips, TRUE)) {
+    $access = TRUE;
+  }
+  else {
+    foreach ($allowed_ips as $range) {
+      if (_fitbit_cidr_match($ip, $range)) {
+        $access = TRUE;
+      }
+    }
+  }
+  return $access;
+}
+
+/**
+* Given a CIDR mask and an IP address, return TRUE or FALSE if the IP address
+* matches or doesn't match the CIDR mask.
+* Adapted from http://stackoverflow.com/questions/594112
+*/
+function _fitbit_cidr_match($ip, $range) {
+  list ($subnet, $bits) = explode('/', $range);
+  $ip = ip2long($ip);
+  $subnet = ip2long($subnet);
+  // Sanity check: ip2long() returns FALSE for an invalid IP address.
+  if (empty($subnet) || empty($bits) || empty($ip)) {
+    return FALSE;
+  }
+  $mask = -1 << (32 - $bits);
+  $subnet &= $mask;
+  return ($ip & $mask) == $subnet;
+}
