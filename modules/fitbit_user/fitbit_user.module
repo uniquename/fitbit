@@ -14,11 +14,22 @@ function fitbit_user_menu() {
     'title' => 'Fitbit User Authorization Callback',
     'page callback' => 'fitbit_user_auth_callback',
     'page arguments' => array(2),
-    // @todo: What permissions should this have?
-    'access callback' => 'fitbit_auth_callback_access',
+    'access callback' => 'fitbit_user_auth_callback_access',
     'type' => MENU_CALLBACK,
   );
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function fitbit_user_permission() {
+  return array(
+    'authorize fitbit account' => array(
+      'title' => t('Authorize Fitbit Account'),
+      'description' => t('Authorize the site to access this user\'s personal Firbit account.'),
+    ),
+  );
 }
 
 /**
@@ -26,6 +37,9 @@ function fitbit_user_menu() {
  *
  * This redirects to Fitbit for authorization
  * and then gets the access keys.
+ *
+ * @param object $account
+ *  A loaded Drupal user account.
  */
 function fitbit_user_auth_callback($account) {
   global $base_url;
@@ -35,24 +49,33 @@ function fitbit_user_auth_callback($account) {
     $request_token_info = $client->oauth->getRequestToken($client->getParam('requestTokenUrl'), $base_url . '/fitbit/auth/' . $account->uid);
     $_SESSION['fitbit_request_token'] = $request_token_info;
     header('Location: ' . $client->getParam('authUrl') . '?oauth_token=' . $request_token_info['oauth_token']);
+    // We return here, because this will send a user
+    // over to the auth page at fitbit.com.
     return;
   }
-  else {
-    // Once fitbit has sent us back here, we get some access tokens for continued use.
-    $request_token = $_GET['oauth_token'];
-    $client->oauth->setToken($request_token, $_SESSION['fitbit_request_token']['oauth_token_secret']);
-    $access_token_info = $client->oauth->getAccessToken($client->getParam('accessTokenUrl'));
-    module_invoke_all('fitbit_authenticate', $account, $access_token_info);
-    unset($_SESSION['fitbit_request_token']);
-    drupal_set_message('Sucessfully authenticated with Fitbit');
-  }
+
+  // Once fitbit has sent us back here, we get some access tokens for continued use.
+  $request_token = $_GET['oauth_token'];
+  $client->oauth->setToken($request_token, $_SESSION['fitbit_request_token']['oauth_token_secret']);
+  $access_token_info = $client->oauth->getAccessToken($client->getParam('accessTokenUrl'));
+  module_invoke_all('fitbit_user_authenticate', $account, $access_token_info);
+  unset($_SESSION['fitbit_request_token']);
+  drupal_set_message('Sucessfully authenticated with Fitbit');
+  module_invoke_all('fitbit_user_post_authenticate', $account, $access_token_info);
   drupal_goto('user/' . $account->uid);
+}
+
+/**
+ * Determine if this user should have access to authorize this site to access their Fitbit account.
+ */
+function fitbit_user_auth_callback_access() {
+  return user_access('authorize fitbit account') && !user_is_anonymous();
 }
 
 /**
  * Implements hook_fitbit_user_authenticate().
  */
-function fitbit_user_fitbit_authenticate($account, $access_token_info) {
+function fitbit_user_fitbit_user_authenticate($account, $access_token_info) {
   fitbit_user_update_authentication_info($account, $access_token_info);
 }
 
@@ -64,7 +87,7 @@ function fitbit_user_user_delete($account) {
 }
 
 /**
- * Implements hook_user_delete().
+ * Implements hook_user_load().
  */
 function fitbit_user_user_load($accounts) {
   foreach ($accounts as $account) {
@@ -124,7 +147,7 @@ function fitbit_user_get_tokens($account) {
   ->fields('f')
   ->condition('uid', $account->uid)
   ->execute()
-  ->fetchCol();
+  ->fetchAssoc();
 }
 
 /**
