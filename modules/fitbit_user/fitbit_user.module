@@ -29,7 +29,37 @@ function fitbit_user_permission() {
       'title' => t('Authorize Fitbit Account'),
       'description' => t('Authorize the site to access this user\'s personal Firbit account.'),
     ),
+    'administer fitbit users' => array(
+      'title' => t('Administer Fitbit Users'),
+      'description' => t('Administer fitbit authorizations on users.'),
+    ),
   );
+}
+
+/**
+ * Implements hook_user_view().
+ */
+function fitbit_user_user_view($account) {
+  global $user;
+  // Show fitbit authorization info.
+  if ((user_access('authorize fitbit account') && $user->uid == $account->uid)
+      || user_access('administer fitbit users')) {
+
+    // Message depends on whether the user has a connected account or not.
+    if (!empty($account->fitbit_tokens['fitbit_uid'])) {
+      $message = t('This user is paired with the fibit account %id.', array('%id' => $account->fitbit_tokens['fitbit_uid']));
+    }
+    else {
+      $message = t('This user is not paired with an authorized Fitbit account.  Go !here to authorize.', array('!here' => l(t('here'), "fitbit/auth/{$account->uid}")));
+    }
+
+    $account->content['fitbit_info'] = array(
+      '#type' => 'item',
+      '#title' => t('Fitbit'),
+      '#markup' => $message,
+      '#weight' => 5,
+    );
+  }
 }
 
 /**
