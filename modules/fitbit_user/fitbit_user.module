@@ -58,10 +58,9 @@ function fitbit_user_auth_callback($account) {
   $request_token = $_GET['oauth_token'];
   $client->oauth->setToken($request_token, $_SESSION['fitbit_request_token']['oauth_token_secret']);
   $access_token_info = $client->oauth->getAccessToken($client->getParam('accessTokenUrl'));
-  module_invoke_all('fitbit_user_authenticate', $account, $access_token_info);
   unset($_SESSION['fitbit_request_token']);
-  drupal_set_message('Sucessfully authenticated with Fitbit');
   module_invoke_all('fitbit_user_post_authenticate', $account, $access_token_info);
+  drupal_set_message('Sucessfully authenticated with Fitbit');
   drupal_goto('user/' . $account->uid);
 }
 
@@ -75,7 +74,7 @@ function fitbit_user_auth_callback_access() {
 /**
  * Implements hook_fitbit_user_authenticate().
  */
-function fitbit_user_fitbit_user_authenticate($account, $access_token_info) {
+function fitbit_user_fitbit_user_post_authenticate($account, $access_token_info) {
   fitbit_user_update_authentication_info($account, $access_token_info);
 }
 
@@ -108,14 +107,15 @@ function fitbit_user_user_load($accounts) {
  *  The merge query status.
  */
 function fitbit_user_update_authentication_info($account, $access_token_info) {
-  return db_merge('fitbit_user_tokens')
-  ->key(array('uid' => $account->uid))
-  ->fields(array(
+  $account->fitbit_tokens = array(
     'uid' => $account->uid,
     'fitbit_uid' => $access_token_info['encoded_user_id'],
     'access_token' => $access_token_info['oauth_token'],
     'access_secret' => $access_token_info['oauth_token_secret'],
-  ))
+  );
+  return db_merge('fitbit_user_tokens')
+  ->key(array('uid' => $account->uid))
+  ->fields($account->fitbit_tokens)
   ->execute();
 }
 
@@ -148,6 +148,32 @@ function fitbit_user_get_tokens($account) {
   ->condition('uid', $account->uid)
   ->execute()
   ->fetchAssoc();
+}
+
+/**
+ * Load a user from their fitbit user id.
+ *
+ * @param string $fitbit_uid
+ *  A user's fitbit user id.
+ * @param boolean $reset
+ *  Whether or not to reload from the database.
+ *
+ * @return object|NULL
+ */
+function fitbit_user_load_account_by_fitbit_id($fitbit_uid, $reset = FALSE) {
+  $account = NULL;
+  $accounts = &drupal_static(__FUNCTION__, array());
+  if (empty($accounts[$fitbit_uid]) || $reset) {
+    $accounts[$fitbit_uid] = db_select('fitbit_user_tokens', 'f')
+      ->fields('f', array('uid'))
+      ->condition('fitbit_uid', $fitbit_uid)
+      ->execute()
+      ->fetchCol();
+  }
+  if (!empty($accounts[$fitbit_uid])) {
+    $account = user_load($accounts[$fitbit_uid], $reset);
+  }
+  return $account;
 }
 
 /**

@@ -128,7 +128,6 @@ function fitbit_request($path, $oauth_token, $oauth_secret, $parameters = array(
 function fitbit_add_subscription($collection, $subscription_id, $oauth_token, $oauth_secret) {
   $client = fitbit_get_client();
   $client->setOAuthDetails($oauth_token, $oauth_secret);
-  // @todo: See addSubscription for more options.
   $path = "user/-/" . $collection . "/apiSubscriptions/" . $subscription_id;
   return fitbit_request($path, $oauth_token, $oauth_secret, array(), OAUTH_HTTP_METHOD_POST);
 }
