@@ -44,14 +44,13 @@ function fitbit_admin_page() {
     '#maxlength' => 40,
     '#default_value' => variable_get('fitbit_consumer_secret', ''),
   );
+  $form['fitbit_debug_mode'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('FitBit Debug Mode'),
+    '#description' => t('When in debug mode, more data will be logged when connecting to and from Fitbit.'),
+    '#default_value' => variable_get('fitbit_debug_mode', FALSE),
+  );
   return system_settings_form($form);
-}
-
-/**
- * @todo Which users do we want to access the auth callback?
- */
-function fitbit_auth_callback_access() {
-  return !user_is_anonymous();
 }
 
 /**
@@ -146,8 +145,9 @@ function fitbit_service_page() {
   // Get the data somehow.
   // @todo: Add some error and security checks on data.
   $data = json_decode(file_get_contents($_FILES['updates']['tmp_name']));
-  // @todo: add a debug mode.
-  watchdog('fitbit', '<pre>' . print_r($data, TRUE) . '</pre>');
+  if (variable_get('fitbit_debug_mode', FALSE)) {
+    watchdog('fitbit', '<pre>' . print_r($data, TRUE) . '</pre>');
+  }
 
   module_invoke_all('fitbit_receive_data', $data);
   drupal_exit();
