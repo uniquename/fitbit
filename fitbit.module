@@ -82,7 +82,7 @@ function fitbit_get_client($consumer_key = NULL, $consumer_secret = NULL, $debug
 /**
  * Make a request to Fitbit.
  *
- * This is basically a wrapper for FitBitPHP::customCall().
+ * This is basically a wrapper for FitBit::request().
  *
  * @param string $path
  *  The API path from which to GET/POST data.
@@ -100,7 +100,7 @@ function fitbit_request($path, $oauth_token, $oauth_secret, $parameters = array(
   $result = NULL;
   $client = fitbit_get_client();
   $client->setOAuthDetails($oauth_token, $oauth_secret);
-  $response = $client->customCall($path . '.' . $protocol, $parameters, $method);
+  $response = $client->request($path . '.' . $protocol, $parameters, $method);
   // Response code 201 = content created
   if (in_array($response->code, array(200, 201))) {
     if ($protocol == 'json') {

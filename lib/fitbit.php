@@ -29,6 +29,7 @@ class FitBit {
 
   protected $userId = '-';
 
+  // Defaults to English measurements.
   protected $metric = 1;
   protected $userAgent = 'Fitbit';
   protected $debug;
@@ -61,9 +62,14 @@ class FitBit {
   }
 
   /**
+   * Initialize the relevant fitbit urls.
    *
+   * @param boolean $https
+   *  Whether ot not we are using ssl urls for oauth.
+   * @param boolean $httpsApi
+   *  Whether ot not we are using ssl urls for basic api requests.
    */
-  private function initUrls($https = true, $httpsApi = false) {
+  private function initUrls($https = TRUE, $httpsApi = FALSE) {
     if ($httpsApi) {
       $this->baseApiUrl = 'https://' . $this->apiHost . '/1/';
     }
@@ -78,7 +84,13 @@ class FitBit {
   }
 
   /**
-   * Get one the parameter.
+   * Get one single parameter from the object.
+   *
+   * @param string $type
+   *  The name of the parameter to grab.
+   *
+   * @return mixed
+   *  The parameter if it exists, otherwise NULL.
    */
   public function getParam($type) {
     return isset($this->{$type}) ? $this->{$type} : NULL;
@@ -142,7 +154,7 @@ class FitBit {
    * @param array $userHeaders Additional custom headers
    * @return object
    */
-  public function customCall($url, $parameters, $method, $userHeaders = array()) {
+  public function request($url, $parameters, $method, $userHeaders = array()) {
     $headers = $this->getHeaders();
     $headers = array_merge($headers, $userHeaders);
 
@@ -170,7 +182,7 @@ class FitBit {
    * @param array $userHeaders Additional custom headers
    * @return object
    */
-  public function clientCustomCall($url, $parameters, $method, $userHeaders = array()) {
+  public function clientRequest($url, $parameters, $method, $userHeaders = array()) {
     $OAuthConsumer = new OAuth($this->consumerKey, $this->consumerSecret, OAUTH_SIG_METHOD_HMACSHA1, OAUTH_AUTH_TYPE_AUTHORIZATION);
 
     if ($debug) {
