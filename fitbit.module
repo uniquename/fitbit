@@ -74,7 +74,7 @@ function fitbit_get_client($consumer_key = NULL, $consumer_secret = NULL, $debug
   if (empty($client)) {
     $consumer_key = is_null($consumer_key) ? variable_get('fitbit_consumer_key', '') : $consumer_key;
     $consumer_secret = is_null($consumer_secret) ? variable_get('fitbit_consumer_secret', '') : $consumer_secret;
-    $client = new FitBitPHP($consumer_key, $consumer_secret, $debug, $userAgent);
+    $client = new FitBit($consumer_key, $consumer_secret, $debug, $userAgent);
   }
   return $client;
 }
@@ -146,6 +146,7 @@ function fitbit_service_page() {
   // Get the data somehow.
   // @todo: Add some error and security checks on data.
   $data = json_decode(file_get_contents($_FILES['updates']['tmp_name']));
+  // @todo: add a debug mode.
   watchdog('fitbit', '<pre>' . print_r($data, TRUE) . '</pre>');
 
   module_invoke_all('fitbit_receive_data', $data);
@@ -159,8 +160,7 @@ function fitbit_service_page() {
  *  Whether or not the ip is allowed.
  */
 function fitbit_ip_is_allowed() {
-  // @todo: Won't work properly with a proxy server.
-  $ip = $_SERVER['REMOTE_ADDR'];
+  $ip = !empty($_SERVER['HTTP_X_FORWARD_FOR']) ? $_SERVER['HTTP_X_FORWARD_FOR'] : $_SERVER['REMOTE_ADDR'];
   watchdog('fitbit', 'Connecting from ' . $ip);
   $allowed_ips = variable_get('fitbit_allowed_ips', array('67.228.35.128/26'));
   $access = FALSE;

@@ -156,7 +156,7 @@ class FitBit {
     $responseInfo = $this->oauth->getLastResponseInfo();
     $fullResponse = (object) array(
       'code' => $responseInfo['http_code'],
-      'response' => $response;
+      'response' => $response,
     );
     return $fullResponse;
   }
@@ -191,7 +191,7 @@ class FitBit {
     $this->clientDebug = print_r($OAuthConsumer->debugInfo, true);
     $fullResponse = (object) array(
       'code' => $responseInfo['http_code'],
-      'response' => $response;
+      'response' => $response,
     );
     return $fullResponse;
   }

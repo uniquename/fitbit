@@ -140,5 +140,5 @@ function fitbit_user_get_tokens($account) {
  * @return
  */
 function fitbit_user_add_subscription($collection, $subscription_id, $account) {
-  return firbit_add_subscription($collection, $subscription_id, $account->fitbit_tokens['access_token'], $account->fitbit_tokens['access_secret']);
+  return fitbit_add_subscription($collection, $subscription_id, $account->fitbit_tokens['access_token'], $account->fitbit_tokens['access_secret']);
 }
