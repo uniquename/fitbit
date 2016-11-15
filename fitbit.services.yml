@@ -1,7 +1,10 @@
 services:
+  fitbit.access_token_manager:
+    class: Drupal\fitbit\FitbitAccessTokenManager
+    arguments: ['@database']
   fitbit.client:
     class: Drupal\fitbit\FitbitClient
     factory: fitbit.client_factory:create
-    arguments: ['@config.factory']
+    arguments: ['@config.factory', '@fitbit.access_token_manager']
   fitbit.client_factory:
     class: Drupal\fitbit\FitbitClientFactory

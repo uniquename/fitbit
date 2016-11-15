@@ -3,13 +3,14 @@
 namespace Drupal\fitbit\Controller;
 
 use Drupal\Core\Access\AccessResult;
-use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Database\Connection;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
+use Drupal\fitbit\FitbitAccessTokenManager;
 use Drupal\fitbit\FitbitClient;
 use Drupal\user\PrivateTempStoreFactory;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -21,6 +22,13 @@ class Authorization extends ControllerBase {
    * @var \Drupal\fitbit\FitbitClient
    */
   protected $fitbitClient;
+
+  /**
+   * Fitbit Access Token Manager.
+   *
+   * @var \Drupal\fitbit\FitbitAccessTokenManager
+   */
+  protected $fitbitAccessTokenManager;
 
   /**
    * Session storage.
@@ -37,13 +45,6 @@ class Authorization extends ControllerBase {
   protected $request;
 
   /**
-   * Database connection.
-   *
-   * @var \Drupal\Core\Database\Connection
-   */
-  protected $connection;
-
-  /**
    * The current user.
    *
    * @var \Drupal\Core\Session\AccountInterface
@@ -54,16 +55,16 @@ class Authorization extends ControllerBase {
    * Authorization constructor.
    *
    * @param FitbitClient $fitbit_client
+   * @param FitbitAccessTokenManager $fitbit_access_token_manager
    * @param PrivateTempStoreFactory $private_temp_store_factory
    * @param Request $request
-   * @param Connection $connection
    * @param AccountInterface $current_user
    */
-  public function __construct(FitbitClient $fitbit_client, PrivateTempStoreFactory $private_temp_store_factory, Request $request, Connection $connection, AccountInterface $current_user) {
+  public function __construct(FitbitClient $fitbit_client, FitbitAccessTokenManager $fitbit_access_token_manager, PrivateTempStoreFactory $private_temp_store_factory, Request $request, AccountInterface $current_user) {
     $this->fitbitClient = $fitbit_client;
+    $this->fitbitAccessTokenManager = $fitbit_access_token_manager;
     $this->tempStore = $private_temp_store_factory->get('fitbit');
     $this->request = $request;
-    $this->connection = $connection;
     $this->currentUser = $current_user;
   }
 
@@ -73,9 +74,9 @@ class Authorization extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('fitbit.client'),
+      $container->get('fitbit.access_token_manager'),
       $container->get('user.private_tempstore'),
       $container->get('request_stack')->getCurrentRequest(),
-      $container->get('database'),
       $container->get('current_user')
     );
   }
@@ -92,31 +93,19 @@ class Authorization extends ControllerBase {
         'code' => $this->request->get('code')]
       );
 
-      // We have an access token, which we may use in authenticated
-      // requests against the service provider's API.
-      $this->connection->merge('fitbit_user_access_tokens')
-        ->key(['uid' => $this->currentUser->id()])
-        ->fields([
-          'access_token' => $access_token->getToken(),
-          'expires' => $access_token->getExpires(),
-          'refresh_token' => $access_token->getRefreshToken(),
-          'user_id' => $access_token->getResourceOwnerId(),
-        ])
-        ->execute();
+      // Save access token details.
+      $this->fitbitAccessTokenManager->save($this->currentUser->id(), [
+        'access_token' => $access_token->getToken(),
+        'expires' => $access_token->getExpires(),
+        'refresh_token' => $access_token->getRefreshToken(),
+        'user_id' => $access_token->getResourceOwnerId(),
+      ]);
 
-      // Using the access token, we may look up details about the
-      // resource owner.
-      $resourceOwner = $this->fitbitClient->getResourceOwner($access_token);
-
-      kint($resourceOwner->toArray());
+      return new RedirectResponse(Url::fromRoute('fitbit.user_settings', ['user' => $this->currentUser->id()])->toString());
     }
     catch (IdentityProviderException $e) {
       watchdog_exception('fitbit', $e);
     }
-
-    return [
-      '#markup' => 'You made it back, yay!',
-    ];
   }
 
   /**

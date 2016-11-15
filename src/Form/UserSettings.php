@@ -2,14 +2,11 @@
 
 namespace Drupal\fitbit\Form;
 
-use djchen\OAuth2\Client\Provider\Fitbit;
 use Drupal\Core\Access\AccessResult;
-use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Url;
 use Drupal\fitbit\FitbitClient;
 use Drupal\user\PrivateTempStoreFactory;
 use Drupal\user\UserInterface;
@@ -23,13 +20,6 @@ class UserSettings extends FormBase {
    * @var \Drupal\fitbit\FitbitClient
    */
   protected $fitbitClient;
-
-  /**
-   * Current logged in user.
-   *
-   * @var AccountInterface
-   */
-  protected $currentUser;
 
   /**
    * Session storage.
@@ -55,7 +45,8 @@ class UserSettings extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('fitbit.client'),
-      $container->get('user.private_tempstore')
+      $container->get('user.private_tempstore'),
+      $container->get('database')
     );
   }
 
@@ -69,11 +60,19 @@ class UserSettings extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
-    $form['submit'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Connect to Fitbit'),
-    ];
+  public function buildForm(array $form, FormStateInterface $form_state, AccountInterface $user = NULL) {
+    if ($fitbit_user = $this->fitbitClient->getResourceOwner($user->id())) {
+
+      $form['authenticated'] = [
+        '#markup' => 'You\'re authenticated. Welcome.'
+      ];
+    }
+    else {
+      $form['submit'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Connect to Fitbit'),
+      ];
+    }
 
     return $form;
   }
