@@ -61,11 +61,25 @@ class UserSettings extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, AccountInterface $user = NULL) {
+    // Attempt to get the Fitibit account. If the account is properly linked,
+    // this will return a result which we'll use to present some of the users
+    // stats.
     if ($fitbit_user = $this->fitbitClient->getResourceOwner($user->id())) {
-
+      $user_data = $fitbit_user->toArray();
       $form['authenticated'] = [
-        '#markup' => 'You\'re authenticated. Welcome.'
+        '#markup' => t('<p>You\'re authenticated. Welcome @name.</p>', ['@name' => $fitbit_user->getDisplayName()]),
       ];
+      if (!empty($user_data['avatar150'])) {
+        $form['avatar'] = [
+          '#theme' => 'image',
+          '#uri' => $user_data['avatar150'],
+        ];
+      }
+      if (!empty($user_data['averageDailySteps'])) {
+        $form['avg_steps'] = [
+          '#markup' => t('<p><strong>Average daily steps:</strong> @steps</p>', ['@steps' => $user_data['averageDailySteps']]),
+        ];
+      }
     }
     else {
       $form['submit'] = [

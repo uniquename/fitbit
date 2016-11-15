@@ -3,7 +3,8 @@
 namespace Drupal\fitbit;
 
 use djchen\OAuth2\Client\Provider\Fitbit;
-use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use djchen\OAuth2\Client\Provider\FitbitUser;
+use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
 
 /**
@@ -35,9 +36,23 @@ class FitbitClient extends Fitbit {
    *
    * @param int $uid
    *
-   * @return ResourceOwnerInterface
+   * @return FitbitUser
    */
   public function getResourceOwner($uid) {
+    if ($access_token = $this->getAccessTokenByUid($uid)) {
+      return parent::getResourceOwner($access_token);
+    }
+  }
+
+  /**
+   * Trys to find a access token for the given $uid. Take care for refreshing
+   * the token if necessary.
+   *
+   * @param int $uid
+   *
+   * @return AccessToken
+   */
+  protected function getAccessTokenByUid($uid) {
     if ($data = $this->fitbitAccessTokenManager->get($uid)) {
 
       $access_token = new AccessToken([
@@ -47,7 +62,25 @@ class FitbitClient extends Fitbit {
         'expires' => $data['expires'],
       ]);
 
-      return parent::getResourceOwner($access_token);
+      try {
+        // Check if the access_token is expired. If it is, refresh it and save
+        // it to the database.
+        if ($access_token->hasExpired()) {
+          $access_token = $this->getAccessToken('refresh_token', ['refresh_token' => $data['refresh_token']]);
+
+          $this->fitbitAccessTokenManager->save($uid, [
+            'access_token' => $access_token->getToken(),
+            'expires' => $access_token->getExpires(),
+            'refresh_token' => $access_token->getRefreshToken(),
+            'user_id' => $access_token->getResourceOwnerId(),
+          ]);
+        }
+
+        return $access_token;
+      }
+      catch (IdentityProviderException $e) {
+        watchdog_exception('fitbit', $e);
+      }
     }
   }
 }

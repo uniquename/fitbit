@@ -101,6 +101,8 @@ class Authorization extends ControllerBase {
         'user_id' => $access_token->getResourceOwnerId(),
       ]);
 
+      drupal_set_message('You\'re Fitbit account is now connected.');
+
       return new RedirectResponse(Url::fromRoute('fitbit.user_settings', ['user' => $this->currentUser->id()])->toString());
     }
     catch (IdentityProviderException $e) {
