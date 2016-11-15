@@ -1,6 +1,0 @@
-name = Fitbit User
-description = Module for connecting to inidvidual user to Fitbit
-core = 7.x
-package = Fitbit
-
-dependencies[] = fitbit

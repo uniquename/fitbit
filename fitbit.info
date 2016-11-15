@@ -1,7 +1,0 @@
-name = Fitbit API
-description = API for connecting to Fitbit and handling data.
-core = 7.x
-package = Fitbit
-
-configure = admin/config/services/fitbit
-files[] = lib/fitbit.php

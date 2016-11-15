@@ -1,0 +1,22 @@
+{
+  "name": "drupal/fitbit",
+  "type": "drupal-module",
+  "description": "Fitbit API wrapper module for connecting to Fitbit.",
+  "keywords": ["Drupal"],
+  "license": "GPL-2.0+",
+  "homepage": "https://www.drupal.org/project/fitbit",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/fitbit",
+    "source": "http://cgit.drupalcode.org/fitbit"
+  },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/m4olivei/oauth2-fitbit.git"
+    }
+  ],
+  "require": {
+    "djchen/oauth2-fitbit": "dev-21-resource-owner-id"
+  }
+}

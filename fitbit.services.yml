@@ -1,0 +1,7 @@
+services:
+  fitbit.client:
+    class: Drupal\fitbit\FitbitClient
+    factory: fitbit.client_factory:create
+    arguments: ['@config.factory']
+  fitbit.client_factory:
+    class: Drupal\fitbit\FitbitClientFactory
