@@ -64,8 +64,9 @@ class UserSettings extends FormBase {
     // Attempt to get the Fitibit account. If the account is properly linked,
     // this will return a result which we'll use to present some of the users
     // stats.
-    if ($fitbit_user = $this->fitbitClient->getResourceOwner($user->id())) {
+    if ($fitbit_user = $this->fitbitClient->getResourceOwnerByUid($user->id())) {
       $user_data = $fitbit_user->toArray();
+
       $form['authenticated'] = [
         '#markup' => t('<p>You\'re authenticated. Welcome @name.</p>', ['@name' => $fitbit_user->getDisplayName()]),
       ];

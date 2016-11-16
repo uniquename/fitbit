@@ -32,20 +32,86 @@ class FitbitClient extends Fitbit {
   }
 
   /**
-   * Override getResourceOwner to allow callers to use a plain Drupal uid.
+   * Get the resource owner by Drupal uid.
    *
    * @param int $uid
    *
    * @return FitbitUser
    */
-  public function getResourceOwner($uid) {
+  public function getResourceOwnerByUid($uid) {
     if ($access_token = $this->getAccessTokenByUid($uid)) {
       return parent::getResourceOwner($access_token);
     }
   }
 
   /**
-   * Trys to find a access token for the given $uid. Take care for refreshing
+   * Get a users badges.
+   *
+   * @param int $uid
+   *
+   * @return mixed
+   */
+  public function getBadges($uid) {
+    return $this->request('/1/user/-/badges.json', $uid);
+  }
+
+  /**
+   * Get daily activity for the given user.
+   *
+   * @param int $uid
+   * @param string $date
+   *
+   * @return mixed
+   */
+  public function getDailyActivitySummary($uid, $date = NULL) {
+    if (!isset($date)) {
+      $date = date('Y-m-d', REQUEST_TIME);
+    }
+    return $this->request('/1/user/-/activities/date/' . $date . '.json', $uid);
+  }
+
+  public function getActivityTimeSeries($uid, $resource, $date = NULL, $period = NULL) {
+    if (!isset($date)) {
+      $date = date('Y-m-d', REQUEST_TIME);
+    }
+    if (!isset($period)) {
+      $period = '7d';
+    }
+    return $this->request('/1/user/-/' . $resource . '/date/' . $date . '/' . $period . '.json', $uid);
+  }
+
+  /**
+   * Request a resource on the Fitbit API.
+   *
+   * @param string $resource
+   *   Path to the resource on the API. Should include a leading /.
+   * @param int $uid
+   *   Drupal user id.
+   *
+   * @return mixed
+   *   API response.
+   */
+  protected function request($resource, $uid) {
+    if ($access_token = $this->getAccessTokenByUid($uid)) {
+      $request = $this->getAuthenticatedRequest(
+        Fitbit::METHOD_GET,
+        Fitbit::BASE_FITBIT_API_URL . $resource,
+        $access_token,
+        // @todo setting for units
+        ['headers' => [Fitbit::HEADER_ACCEPT_LANG => 'en_US']]
+      );
+
+      try {
+        return $this->getResponse($request);
+      }
+      catch (IdentityProviderException $e) {
+        watchdog_exception('fitbit', $e);
+      }
+    }
+  }
+
+  /**
+   * Get the access token by Drupal uid. Take care for refreshing
    * the token if necessary.
    *
    * @param int $uid
