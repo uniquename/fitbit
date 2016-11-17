@@ -35,12 +35,18 @@ class FitbitClient extends Fitbit {
    * Get the resource owner by Drupal uid.
    *
    * @param int $uid
+   *   Drupal user id.
    *
    * @return FitbitUser
    */
   public function getResourceOwnerByUid($uid) {
     if ($access_token = $this->getAccessTokenByUid($uid)) {
-      return parent::getResourceOwner($access_token);
+      try {
+        return parent::getResourceOwner($access_token);
+      }
+      catch (IdentityProviderException $e) {
+        watchdog_exception('fitbit', $e);
+      }
     }
   }
 
@@ -48,6 +54,7 @@ class FitbitClient extends Fitbit {
    * Get a users badges.
    *
    * @param int $uid
+   *   Drupal user id.
    *
    * @return mixed
    */
@@ -70,14 +77,25 @@ class FitbitClient extends Fitbit {
     return $this->request('/1/user/-/activities/date/' . $date . '.json', $uid);
   }
 
-  public function getActivityTimeSeries($uid, $resource, $date = NULL, $period = NULL) {
-    if (!isset($date)) {
-      $date = date('Y-m-d', REQUEST_TIME);
-    }
-    if (!isset($period)) {
-      $period = '7d';
-    }
-    return $this->request('/1/user/-/' . $resource . '/date/' . $date . '/' . $period . '.json', $uid);
+  /**
+   * @param int $uid
+   *   Drupal user id.
+   * @param $resource_path
+   *   One of the allowable resource paths accepted by the Fitbit API, for
+   *   example, activities/steps. For the full list, see
+   *   https://dev.fitbit.com/docs/activity/#resource-path-options
+   * @param string $date
+   *   The end date of the period specified in the format yyyy-MM-dd or today.
+   * @param string $period
+   *   The range for which data will be returned. Options are 1d, 7d, 30d, 1w,
+   *   1m, 3m, 6m, 1y.
+   *
+   * @return mixed
+   */
+  public function getActivityTimeSeries($uid, $resource_path, $date = NULL, $period = NULL) {
+    isset($date) ?: $date = 'today';
+    isset($period) ?: $period = '7d';
+    return $this->request('/1/user/-/' . $resource_path . '/date/' . $date . '/' . $period . '.json', $uid);
   }
 
   /**
@@ -91,7 +109,7 @@ class FitbitClient extends Fitbit {
    * @return mixed
    *   API response.
    */
-  protected function request($resource, $uid) {
+  public function request($resource, $uid) {
     if ($access_token = $this->getAccessTokenByUid($uid)) {
       $request = $this->getAuthenticatedRequest(
         Fitbit::METHOD_GET,
@@ -118,7 +136,7 @@ class FitbitClient extends Fitbit {
    *
    * @return AccessToken
    */
-  protected function getAccessTokenByUid($uid) {
+  public function getAccessTokenByUid($uid) {
     if ($data = $this->fitbitAccessTokenManager->get($uid)) {
 
       $access_token = new AccessToken([

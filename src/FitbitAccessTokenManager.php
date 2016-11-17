@@ -9,6 +9,8 @@ use Drupal\Core\Database\Connection;
  */
 class FitbitAccessTokenManager {
 
+  const TOKEN_TABLE = 'fitbit_user_access_tokens';
+
   /**
    * Database connection.
    *
@@ -35,7 +37,7 @@ class FitbitAccessTokenManager {
    *   uid if they exist, otherwise NULL.
    */
   public function get($uid) {
-    $result = $this->connection->query('SELECT * FROM {fitbit_user_access_tokens} WHERE uid = :uid', [':uid' => $uid], ['fetch' => \PDO::FETCH_ASSOC]);
+    $result = $this->connection->query('SELECT * FROM {' . self::TOKEN_TABLE . '} WHERE uid = :uid', [':uid' => $uid], ['fetch' => \PDO::FETCH_ASSOC]);
     foreach ($result as $row) {
       return $row;
     }
@@ -50,9 +52,21 @@ class FitbitAccessTokenManager {
    *   Associative array of access token details.
    */
   public function save($uid, $data) {
-    $this->connection->merge('fitbit_user_access_tokens')
+    $this->connection->merge(self::TOKEN_TABLE)
       ->key(['uid' => $uid])
       ->fields($data)
+      ->execute();
+  }
+
+  /**
+   * Delete access token details for the given uid.
+   *
+   * @param int $uid
+   *   User id for which to delete access token details.
+   */
+  public function delete($uid) {
+    $this->connection->delete(self::TOKEN_TABLE)
+      ->condition('uid', $uid)
       ->execute();
   }
 }
