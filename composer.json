@@ -17,6 +17,6 @@
     }
   ],
   "require": {
-    "djchen/oauth2-fitbit": "dev-21-resource-owner-id"
+    "djchen/oauth2-fitbit": "dev-23-revoke-access-method"
   }
 }
