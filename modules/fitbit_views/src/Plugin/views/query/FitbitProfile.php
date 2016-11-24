@@ -4,7 +4,6 @@ namespace Drupal\fitbit_views\Plugin\views\query;
 
 use Drupal\fitbit\FitbitAccessTokenManager;
 use Drupal\fitbit\FitbitClient;
-use Drupal\views\Plugin\views\join\JoinPluginBase;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;

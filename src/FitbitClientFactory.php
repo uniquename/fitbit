@@ -3,7 +3,6 @@
 namespace Drupal\fitbit;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Database\Connection;
 use Drupal\Core\Url;
 
 class FitbitClientFactory {
