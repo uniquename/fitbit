@@ -79,6 +79,7 @@ class FitbitProfile extends QueryPluginBase {
         // for each row. Without it, views won't show any of your result rows.
         $row['index'] = $index++;
         $row['display_name'] = $user_data['displayName'];
+        $row['average_daily_steps'] = $user_data['averageDailySteps'];
         $view->result[] = new ResultRow($row);
       }
     }

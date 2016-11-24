@@ -22,8 +22,18 @@ function fitbit_views_views_data() {
   ];
 
   // Define all the fields we are exposing to views.
+
+  // Display name.
   $data['fitbit_profile']['display_name'] = [
     'title' => t('Display name'),
+    'field' => [
+      'id' => 'standard',
+    ],
+  ];
+
+  // Average daily steps
+  $data['fitbit_profile']['average_daily_steps'] = [
+    'title' => t('Average daily steps'),
     'field' => [
       'id' => 'standard',
     ],
