@@ -3,3 +3,5 @@ type: module
 description: Views query backend for exposing data from the Fitbit API.
 core: 8.x
 package: Fitbit
+dependencies:
+  - fitbit
