@@ -2,6 +2,7 @@
 
 namespace Drupal\fitbit_views\Plugin\views\query;
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\fitbit\FitbitAccessTokenManager;
 use Drupal\fitbit\FitbitClient;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
@@ -112,6 +113,11 @@ class FitbitProfile extends QueryPluginBase {
    * {@inheritdoc}
    */
   public function execute(ViewExecutable $view) {
+    // Set the units according to the setting on the view.
+    if (!empty($this->options['accept_lang'])) {
+      $this->fitbitClient->setAcceptLang($this->options['accept_lang']);
+    }
+
     // Grab data regarding conditions placed on the query.
     $query = $view->build_info['query'];
     $access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken(empty($query['uid']) ? NULL : [$query['uid']]);
@@ -124,6 +130,8 @@ class FitbitProfile extends QueryPluginBase {
         $row['index'] = $index++;
         $row['display_name'] = $user_data['displayName'];
         $row['average_daily_steps'] = $user_data['averageDailySteps'];
+        $row['weight'] = $user_data['weight'];
+        $row['height'] = $user_data['height'];
         $view->result[] = new ResultRow($row);
       }
     }
@@ -169,6 +177,33 @@ class FitbitProfile extends QueryPluginBase {
       'value' => $value,
       'operator' => $operator,
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function defineOptions() {
+    $options = parent::defineOptions();
+    $options['accept_lang'] = array(
+      'default' => NULL,
+    );
+
+    return $options;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildOptionsForm(&$form, FormStateInterface $form_state) {
+    parent::buildOptionsForm($form, $form_state);
+
+    $form['accept_lang'] = [
+      '#type' => 'select',
+      '#options' => $this->fitbitClient->getAcceptLangOptions(),
+      '#title' => $this->t('Unit system'),
+      '#default_value' => $this->options['accept_lang'],
+      '#description' => $this->t('Set the unit system to use for FitbitAPI requests.'),
+    ];
   }
 
   /**

@@ -4,15 +4,16 @@ namespace Drupal\fitbit;
 
 use djchen\OAuth2\Client\Provider\Fitbit;
 use djchen\OAuth2\Client\Provider\FitbitUser;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
-use Symfony\Component\Validator\Constraints\Null;
 
 /**
  * Fitbit client wrapper. Implement custom methods to retrieve specific Fitbit
  * data using access_tokens stored in Drupal.
  */
 class FitbitClient extends Fitbit {
+  use StringTranslationTrait;
 
   /**
    * Header value to pass along for Accept-Languge, which toggles between the
@@ -52,7 +53,8 @@ class FitbitClient extends Fitbit {
    * @return FitbitUser
    */
   public function getResourceOwner(AccessToken $access_token) {
-    return $this->request('/1/user/-/profile.json', $access_token);
+    $response = $this->request('/1/user/-/profile.json', $access_token);
+    return new FitbitUser($response);
   }
 
   /**
@@ -135,5 +137,21 @@ class FitbitClient extends Fitbit {
     catch (IdentityProviderException $e) {
       watchdog_exception('fitbit', $e);
     }
+  }
+
+  /**
+   * Return an array of supported values for Accept-Language, which correspond
+   * to the unit systems supported by the API.
+   *
+   * @return array
+   *   Associative array keyed by Accept-Language header value. Each value is
+   *   the name of the units system.
+   */
+  public function getAcceptLangOptions() {
+    return [
+      '' => $this->t('Metric'),
+      'en_US' => $this->t('US'),
+      'en_GB' => $this->t('UK'),
+    ];
   }
 }

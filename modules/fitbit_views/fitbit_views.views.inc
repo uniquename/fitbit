@@ -39,6 +39,24 @@ function fitbit_views_views_data() {
     ],
   ];
 
+  // Weight
+  $data['fitbit_profile']['weight'] = [
+    'title' => t('Weight'),
+    'field' => [
+      'id' => 'numeric',
+      'float' => TRUE,
+    ],
+  ];
+
+  // Height
+  $data['fitbit_profile']['height'] = [
+    'title' => t('Height'),
+    'field' => [
+      'id' => 'numeric',
+      'float' => TRUE,
+    ],
+  ];
+
   // Filter by Drupal uid
   $data['fitbit_profile']['uid'] = [
     'title' => t('User id'),
