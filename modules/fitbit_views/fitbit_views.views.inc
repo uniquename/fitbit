@@ -39,5 +39,17 @@ function fitbit_views_views_data() {
     ],
   ];
 
+  // Filter by Drupal uid
+  $data['fitbit_profile']['uid'] = [
+    'title' => t('User id'),
+    'help' => t('Drupal user id, not to be confused with Fitbit profile id.'),
+    'field' => [
+      'id' => 'standard',
+    ],
+    'filter' => [
+      'id' => 'fitbit_uid',
+    ],
+  ];
+
   return $data;
 }
