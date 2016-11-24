@@ -132,6 +132,7 @@ class FitbitProfile extends QueryPluginBase {
         $row['average_daily_steps'] = $user_data['averageDailySteps'];
         $row['weight'] = $user_data['weight'];
         $row['height'] = $user_data['height'];
+        $row['top_badges'] = $user_data['topBadges'];
         $view->result[] = new ResultRow($row);
       }
     }

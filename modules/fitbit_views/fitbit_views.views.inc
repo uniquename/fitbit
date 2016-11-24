@@ -22,6 +22,7 @@ function fitbit_views_views_data() {
   ];
 
   // Define all the fields we are exposing to views.
+  // @todo none of our fields are click sortable, using the default field plugins allows click sort. there may be other things like this.
 
   // Display name.
   $data['fitbit_profile']['display_name'] = [
@@ -54,6 +55,14 @@ function fitbit_views_views_data() {
     'field' => [
       'id' => 'numeric',
       'float' => TRUE,
+    ],
+  ];
+
+  // Badges
+  $data['fitbit_profile']['top_badges'] = [
+    'title' => t('Top badges'),
+    'field' => [
+      'id' => 'fitbit_badges',
     ],
   ];
 
