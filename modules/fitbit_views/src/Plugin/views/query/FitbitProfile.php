@@ -133,6 +133,10 @@ class FitbitProfile extends QueryPluginBase {
         $row['weight'] = $user_data['weight'];
         $row['height'] = $user_data['height'];
         $row['top_badges'] = $user_data['topBadges'];
+        $row['avatar'] = [
+          'avatar' => $user_data['avatar'],
+          'avatar150' => $user_data['avatar150'],
+        ];
         $view->result[] = new ResultRow($row);
       }
     }

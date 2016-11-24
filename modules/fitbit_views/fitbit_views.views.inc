@@ -36,7 +36,7 @@ function fitbit_views_views_data() {
   $data['fitbit_profile']['average_daily_steps'] = [
     'title' => t('Average daily steps'),
     'field' => [
-      'id' => 'standard',
+      'id' => 'numeric',
     ],
   ];
 
@@ -63,6 +63,14 @@ function fitbit_views_views_data() {
     'title' => t('Top badges'),
     'field' => [
       'id' => 'fitbit_badges',
+    ],
+  ];
+
+  // Avatar
+  $data['fitbit_profile']['avatar'] = [
+    'title' => t('Avatar'),
+    'field' => [
+      'id' => 'fitbit_avatar',
     ],
   ];
 
