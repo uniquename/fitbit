@@ -81,7 +81,7 @@ class UserSettings extends FormBase {
     // Attempt to get the Fitibit account. If the account is properly linked,
     // this will return a result which we'll use to present some of the users
     // stats.
-    if ($fitbit_user = $this->fitbitClient->getResourceOwnerByUid($user->id())) {
+    if (($access_token = $this->fitbitAccessTokenManager->loadAccessToken($user->id())) && ($fitbit_user = $this->fitbitClient->getResourceOwner($access_token))) {
       $user_data = $fitbit_user->toArray();
 
       $form['authenticated'] = [
@@ -140,7 +140,7 @@ class UserSettings extends FormBase {
   public function revokeAccess(array &$form, FormStateInterface $form_state) {
     $uid = $form_state->getValue('uid');
 
-    if ($access_token = $this->fitbitClient->getAccessTokenByUid($uid)) {
+    if ($access_token = $this->fitbitAccessTokenManager->loadAccessToken($uid)) {
       try {
         $this->fitbitClient->revoke($access_token);
         $this->fitbitAccessTokenManager->delete($uid);
