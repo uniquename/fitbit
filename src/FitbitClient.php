@@ -6,12 +6,42 @@ use djchen\OAuth2\Client\Provider\Fitbit;
 use djchen\OAuth2\Client\Provider\FitbitUser;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
+use Symfony\Component\Validator\Constraints\Null;
 
 /**
  * Fitbit client wrapper. Implement custom methods to retrieve specific Fitbit
  * data using access_tokens stored in Drupal.
  */
 class FitbitClient extends Fitbit {
+
+  /**
+   * Header value to pass along for Accept-Languge, which toggles between the
+   * allowed unit systems.
+   *
+   * @var string
+   */
+  protected $acceptLang;
+
+  /**
+   * FitbitClient constructor.
+   *
+   * @param array $options
+   * @param string $accept_lang
+   */
+  public function __construct(array $options, $accept_lang = NULL) {
+    parent::__construct($options);
+    $this->setAcceptLang($accept_lang);
+  }
+
+  /**
+   * Setter for the value of the Accept-Language header in all Fitbit profile
+   * requests.
+   *
+   * @param string $accept_lang
+   */
+  public function setAcceptLang($accept_lang = NULL) {
+    $this->acceptLang = $accept_lang;
+  }
 
   /**
    * Get the resource owner by Drupal uid.
@@ -22,12 +52,7 @@ class FitbitClient extends Fitbit {
    * @return FitbitUser
    */
   public function getResourceOwner(AccessToken $access_token) {
-    try {
-      return parent::getResourceOwner($access_token);
-    }
-    catch (IdentityProviderException $e) {
-      watchdog_exception('fitbit', $e);
-    }
+    return $this->request('/1/user/-/profile.json', $access_token);
   }
 
   /**
@@ -93,12 +118,15 @@ class FitbitClient extends Fitbit {
    *   API response.
    */
   public function request($resource, AccessToken $access_token) {
+    $options = [];
+    if ($this->acceptLang) {
+      $options['headers'][Fitbit::HEADER_ACCEPT_LANG] = $this->acceptLang;
+    }
     $request = $this->getAuthenticatedRequest(
       Fitbit::METHOD_GET,
       Fitbit::BASE_FITBIT_API_URL . $resource,
       $access_token,
-      // @todo setting for units
-      ['headers' => [Fitbit::HEADER_ACCEPT_LANG => 'en_US']]
+      $options
     );
 
     try {
