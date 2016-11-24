@@ -10,13 +10,7 @@
     "issues": "https://www.drupal.org/project/issues/fitbit",
     "source": "http://cgit.drupalcode.org/fitbit"
   },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/m4olivei/oauth2-fitbit.git"
-    }
-  ],
   "require": {
-    "djchen/oauth2-fitbit": "dev-23-revoke-access-method"
+    "djchen/oauth2-fitbit": "~0.3.1"
   }
 }
