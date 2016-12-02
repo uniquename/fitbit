@@ -21,12 +21,21 @@ class FitbitAccessTokenManager {
   protected $connection;
 
   /**
+   * Fitbit client.
+   *
+   * @var \Drupal\fitbit\FitbitClient
+   */
+  protected $fitbitClient;
+
+  /**
    * FitbitAccessTokenManager constructor.
    *
    * @param Connection $connection
+   * @param FitbitClient $fitbit_client
    */
-  public function __construct(Connection $connection) {
+  public function __construct(Connection $connection, FitbitClient $fitbit_client) {
     $this->connection = $connection;
+    $this->fitbitClient = $fitbit_client;
   }
 
   /**
@@ -70,7 +79,7 @@ class FitbitAccessTokenManager {
           // Check if the access_token is expired. If it is, refresh it and save
           // it to the database.
           if ($access_token->hasExpired()) {
-            $access_token = $this->getAccessToken('refresh_token', ['refresh_token' => $raw_token['refresh_token']]);
+            $access_token = $this->fitbitClient->getAccessToken('refresh_token', ['refresh_token' => $raw_token['refresh_token']]);
 
             $this->save($raw_token['uid'], [
               'access_token' => $access_token->getToken(),
