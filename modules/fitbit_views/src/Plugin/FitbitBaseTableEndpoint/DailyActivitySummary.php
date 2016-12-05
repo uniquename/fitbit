@@ -13,7 +13,7 @@ use League\OAuth2\Client\Token\AccessToken;
  *   id = "daily_activity_summary",
  *   name = @Translation("Fitbit daily activity summary"),
  *   description = @Translation("Retrives a summary and list of a user's activities and activity log entries for a given day."),
- *   response_key = "summary.steps"
+ *   response_key = "summary:steps"
  * )
  */
 class DailyActivitySummary extends FitbitBaseTableEndpointBase {
@@ -23,7 +23,7 @@ class DailyActivitySummary extends FitbitBaseTableEndpointBase {
    */
   public function getRowByAccessToken(AccessToken $access_token) {
     if ($data = $this->fitbitClient->getDailyActivitySummary($access_token)) {
-      $data = $this->filterArrayByPath(array_keys($this->getFields()));
+      $data = $this->filterArrayByPath($data, array_keys($this->getFields()));
       return new ResultRow($data);
     }
   }
@@ -39,60 +39,60 @@ class DailyActivitySummary extends FitbitBaseTableEndpointBase {
     ];
 
     return [
-      'goals.activeMinutes' => [
+      'goals:activeMinutes' => [
         'title' => $this->t('Goals - Active minutes'),
         'field' => $integer,
       ],
-      'goals.caloriesOut' => [
+      'goals:caloriesOut' => [
         'title' => $this->t('Goals - Calories out'),
         'field' => $integer,
       ],
-      'goals.distance' => [
+      'goals:distance' => [
         'title' => $this->t('Goals - Distance'),
         'field' => $float,
       ],
-      'goals.steps' => [
+      'goals:steps' => [
         'title' => $this->t('Goals - Steps'),
         'field' => $integer,
       ],
-      'summary.activeScore' => [
+      'summary:activeScore' => [
         'title' => $this->t('Active score'),
         'field' => $integer,
       ],
-      'summary.activityCalories' => [
+      'summary:activityCalories' => [
         'title' => $this->t('Activity calories'),
         'field' => $integer,
       ],
-      'summary.caloriesBMR' => [
+      'summary:caloriesBMR' => [
         'title' => $this->t('Calories BMR'),
         'field' => $integer,
       ],
-      'summary.caloriesOut' => [
+      'summary:caloriesOut' => [
         'title' => $this->t('Calories out'),
         'field' => $integer,
       ],
-      // @todo not sure what to do with summary.distances
-      'summary.fairlyActiveMinutes' => [
+      // @todo not sure what to do with summary:distances
+      'summary:fairlyActiveMinutes' => [
         'title' => $this->t('Fairly active minutes'),
         'field' => $integer,
       ],
-      'summary.lightlyActiveMinutes' => [
+      'summary:lightlyActiveMinutes' => [
         'title' => $this->t('Lightly active minutes'),
         'field' => $integer,
       ],
-      'summary.marginalCalories' => [
+      'summary:marginalCalories' => [
         'title' => $this->t('Marginal Calories'),
         'field' => $integer,
       ],
-      'summary.sedentaryMinutes' => [
+      'summary:sedentaryMinutes' => [
         'title' => $this->t('Sedentary minutes'),
         'field' => $integer,
       ],
-      'summary.steps' => [
+      'summary:steps' => [
         'title' => $this->t('Steps'),
         'field' => $integer,
       ],
-      'summary.veryActiveMinutes'=> [
+      'summary:veryActiveMinutes'=> [
         'title' => $this->t('Very active minutes'),
         'field' => $integer,
       ],

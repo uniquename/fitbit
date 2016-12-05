@@ -31,7 +31,8 @@ interface FitbitBaseTableEndpointInterface extends PluginInspectionInterface {
    * Get the name of a string key which is always present in the response.
    *
    * @return string
-   *   Name of a string key that is always in the response in dot path notation.
+   *   Name of a string key that is always in the response. Keys at depth should
+   *   have path parts into the array delimited by colons.
    */
   public function getResponseKey();
 
@@ -51,10 +52,10 @@ interface FitbitBaseTableEndpointInterface extends PluginInspectionInterface {
    * Inform views about the fields this endpoint exposes.
    *
    * @return array
-   *   Associative array. Keys should be in dot notation representation of the
-   *   value to pick out of the API response. Values are an associative array
-   *   appropriate to pass along to views in a hook_views_data implementation
-   *   as the definition of a field.
+   *   Associative array. Keys at depth should have path parts into the array
+   *   delimited by colons. Values are an associative array appropriate to pass
+   *   along to views in a hook_views_data implementation as the definition of a
+   *   field.
    */
   public function getFields();
 }

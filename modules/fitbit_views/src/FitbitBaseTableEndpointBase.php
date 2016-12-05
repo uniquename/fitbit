@@ -69,14 +69,14 @@ abstract class FitbitBaseTableEndpointBase extends PluginBase implements FitbitB
   }
 
   /**
-   * Helper function to filter the input array using an array of paths in dot
-   * notation.
+   * Helper function to filter the input array using an array of paths
+   * delimited by colans.
    *
    * @param array $array
    *   Multidimensional array with string keys.
    * @param array $paths
-   *   Array of string paths in dot notation denoting which elements of $array
-   *   are desired.
+   *   Array of string paths, path parts delimited by colons denoting which
+   *   elements of $array are desired.
    *
    * @return array
    *   Return an array keyed by the $paths values. Only return the values of
@@ -94,7 +94,7 @@ abstract class FitbitBaseTableEndpointBase extends PluginBase implements FitbitB
         $keys[] = $iterator->getSubIterator($depth)->key();
       }
       // Check that the path we are at is being asked for, if not, ignore it.
-      $path = join('.', $keys);
+      $path = join(':', $keys);
       if (in_array($path, $paths)) {
         $result[$path] = $leaf;
       }

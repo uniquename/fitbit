@@ -40,8 +40,8 @@ class FitbitBaseTableEndpoint extends Plugin {
   /**
    * Key name of data that is always returned on the response and can be used
    * as a default, representative value from an API response. Key name should
-   * be in dot format indicating the path of the data value in the response
-   * array.
+   * have path parts delimited by colons denoting which element of $array is
+   * desired.
    *
    * @var string
    */
