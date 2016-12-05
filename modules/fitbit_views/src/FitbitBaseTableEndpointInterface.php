@@ -12,6 +12,30 @@ use Drupal\views\ResultRow;
 interface FitbitBaseTableEndpointInterface extends PluginInspectionInterface {
 
   /**
+   * Get the name of the plugin.
+   *
+   * @return string
+   *   The name of the plugin.
+   */
+  public function getName();
+
+  /**
+   * Get the description of the plugin.
+   *
+   * @return string
+   *   The description of the plugin.
+   */
+  public function getDescription();
+
+  /**
+   * Get the name of a string key which is always present in the response.
+   *
+   * @return string
+   *   Name of a string key that is always in the response in dot path notation.
+   */
+  public function getResponseKey();
+
+  /**
    * Make a request to a Fitbit endpoint using the given access token and return
    * a ResultRow object.
    *
@@ -22,4 +46,15 @@ interface FitbitBaseTableEndpointInterface extends PluginInspectionInterface {
    * @return ResultRow|null
    */
   public function getRowByAccessToken(AccessToken $access_token);
+
+  /**
+   * Inform views about the fields this endpoint exposes.
+   *
+   * @return array
+   *   Associative array. Keys should be in dot notation representation of the
+   *   value to pick out of the API response. Values are an associative array
+   *   appropriate to pass along to views in a hook_views_data implementation
+   *   as the definition of a field.
+   */
+  public function getFields();
 }

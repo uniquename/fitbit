@@ -9,7 +9,12 @@ use League\OAuth2\Client\Token\AccessToken;
 /**
  * Fitbit profile endpoint.
  *
- * @FitbitBaseTableEndpoint("profile")
+ * @FitbitBaseTableEndpoint(
+ *   id = "profile",
+ *   name = @Translation("Fitbit profile"),
+ *   description = @Translation("Returns a user's profile."),
+ *   response_key = "displayName"
+ * )
  */
 class Profile extends FitbitBaseTableEndpointBase {
 
@@ -17,21 +22,64 @@ class Profile extends FitbitBaseTableEndpointBase {
    * {@inheritdoc}
    */
   public function getRowByAccessToken(AccessToken $access_token) {
-    if ($fitbit_user = $this->fitbitClient->getResourceOwner($access_token)) {
-      $user_data = $fitbit_user->toArray();
+    if ($data = $this->fitbitClient->getResourceOwner($access_token)) {
+      $data = $data->toArray();
+      $data = $this->filterArrayByPath($data, array_keys($this->getFields()));
 
-      // The index key is very important. Views uses this to look up values
-      // for each row. Without it, views won't show any of your result rows.
-      $row['display_name'] = $user_data['displayName'];
-      $row['average_daily_steps'] = $user_data['averageDailySteps'];
-      $row['weight'] = $user_data['weight'];
-      $row['height'] = $user_data['height'];
-      $row['top_badges'] = $user_data['topBadges'];
-      $row['avatar'] = [
-        'avatar' => $user_data['avatar'],
-        'avatar150' => $user_data['avatar150'],
+      // Adjust avatar and avatar150
+      $data['avatar'] = [
+        'avatar' => $data['avatar'],
+        'avatar150' => $data['avatar150'],
       ];
-      return new ResultRow($row);
+      unset($data['avatar150']);
+
+      return new ResultRow($data);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFields() {
+    $integer = ['id' => 'numeric'];
+    $float = [
+      'id' => 'numeric',
+      'float' => TRUE,
+    ];
+    $standard = [
+      'id' => 'standard',
+    ];
+    return [
+      'displayName' => [
+        'title' => $this->t('Display name'),
+        'field' => $standard,
+      ],
+      'averageDailySteps' => [
+        'title' => $this->t('Average daily steps'),
+        'field' => $integer,
+      ],
+      'weight' => [
+        'title' => $this->t('Weight'),
+        'field' => $float,
+      ],
+      'height' => [
+        'title' => $this->t('Height'),
+        'field' => $float,
+      ],
+      'topBadges' => [
+        'title' => $this->t('Top badges'),
+        'field' => [
+          'id' => 'fitbit_badges',
+        ],
+      ],
+      'avatar' => [
+        'title' => $this->t('Avatar'),
+        'field' => [
+          'id' =>'fitbit_avatar',
+        ],
+      ],
+      // We don't want to bubble this up to views.
+      'avatar150' => NULL,
+    ];
   }
 }

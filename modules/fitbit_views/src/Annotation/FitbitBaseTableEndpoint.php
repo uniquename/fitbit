@@ -22,4 +22,28 @@ class FitbitBaseTableEndpoint extends Plugin {
    * @var string
    */
   public $id;
+
+  /**
+   * The name of the endpoint.
+   *
+   * @var string
+   */
+  public $name;
+
+  /**
+   * Short description of the endpoint.
+   *
+   * @var string
+   */
+  public $description;
+
+  /**
+   * Key name of data that is always returned on the response and can be used
+   * as a default, representative value from an API response. Key name should
+   * be in dot format indicating the path of the data value in the response
+   * array.
+   *
+   * @var string
+   */
+  public $response_key;
 }

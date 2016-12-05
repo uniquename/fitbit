@@ -137,16 +137,19 @@ class Fitbit extends QueryPluginBase {
     $query = $view->build_info['query'];
     if ($access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken(empty($query['uid']) ? NULL : [$query['uid']])) {
       // Need the data about the table to know which endpoint to use.
-      $views_data = Views::viewsData()->get($this->table);
-      /** @var FitbitBaseTableEndpointInterface $fitbit_endpoint */
-      $fitbit_endpoint = $this->fitbitBaseTableEndpointPluginManager->createInstance($views_data['table']['base']['fitbit_base_table_endpoint_id']);
+      $views_data = Views::viewsData();
+      $base_table = $this->view->storage->get('base_table');
+      $base_table_data = $views_data->get($base_table);
 
+      /** @var FitbitBaseTableEndpointInterface $fitbit_endpoint */
+      $fitbit_endpoint = $this->fitbitBaseTableEndpointPluginManager->createInstance($base_table_data['table']['base']['fitbit_base_table_endpoint_id']);
       $index = 0;
       foreach ($access_tokens as $uid => $access_token) {
         if ($row = $fitbit_endpoint->getRowByAccessToken($access_token)) {
+          // The index key is very important. Views uses this to look up values
+          // for each row. Without it, views won't show any of your result rows.
           $row->index = $index++;
           $row->uid = $uid;
-
           $view->result[] = $row;
         }
       }

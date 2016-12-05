@@ -9,100 +9,42 @@
  * Implements hook_views_data().
  */
 function fitbit_views_views_data() {
-  // Define a base table so we can create views from Fitbit API data.
-  $data['fitbit_profile']['table']['group'] = t('Fitbit profile');
-  $data['fitbit_profile']['table']['base'] = [
-    'title' => t('Fitbit profile'),
-    'query_id' => 'fitbit',
-    'fitbit_base_table_endpoint_id' => 'profile',
-    'help' => t('Fitbit profile query builder.'),
-    'defaults' => [
-      // Default to the display_name field.
-      'field' => 'display_name',
-    ],
-  ];
+  /** @var \Drupal\fitbit_views\FitbitBaseTableEndpointPluginManager $fitbit_base_table_endpoint_manager */
+  $fitbit_base_table_endpoint_manager = \Drupal::service('plugin.manager.fitbit_base_table_endpoints');
+  foreach ($fitbit_base_table_endpoint_manager->getDefinitions() as $plugin_id => $plugin_definition) {
+    /** @var \Drupal\fitbit_views\FitbitBaseTableEndpointInterface $base_table_endpoint */
+    $base_table_endpoint = $fitbit_base_table_endpoint_manager->createInstance($plugin_id);
+    $data['fitbit_' . $plugin_id]['table']['group'] = $base_table_endpoint->getName();
+    $data['fitbit_' . $plugin_id]['table']['base'] = [
+      'title' => $base_table_endpoint->getName(),
+      'query_id' => 'fitbit',
+      'fitbit_base_table_endpoint_id' => $plugin_id,
+      'help' => $base_table_endpoint->getDescription(),
+      'defaults' => [
+        'field' => $base_table_endpoint->getResponseKey(),
+      ],
+    ];
 
-  // Define all the fields we are exposing to views.
-  // @todo none of our fields are click sortable, using the default field plugins allows click sort. there may be other things like this.
+    // Tack on all the field definitions.
+    foreach ($base_table_endpoint->getFields() as $key => $field) {
+      if ($field) {
+        $data['fitbit_' . $plugin_id][$key] = $field;
+      }
+    }
 
-  // Display name.
-  $data['fitbit_profile']['display_name'] = [
-    'title' => t('Display name'),
-    'field' => [
-      'id' => 'standard',
-    ],
-  ];
-
-  // Average daily steps
-  $data['fitbit_profile']['average_daily_steps'] = [
-    'title' => t('Average daily steps'),
-    'field' => [
-      'id' => 'numeric',
-    ],
-  ];
-
-  // Weight
-  $data['fitbit_profile']['weight'] = [
-    'title' => t('Weight'),
-    'field' => [
-      'id' => 'numeric',
-      'float' => TRUE,
-    ],
-  ];
-
-  // Height
-  $data['fitbit_profile']['height'] = [
-    'title' => t('Height'),
-    'field' => [
-      'id' => 'numeric',
-      'float' => TRUE,
-    ],
-  ];
-
-  // Badges
-  $data['fitbit_profile']['top_badges'] = [
-    'title' => t('Top badges'),
-    'field' => [
-      'id' => 'fitbit_badges',
-    ],
-  ];
-
-  // Avatar
-  $data['fitbit_profile']['avatar'] = [
-    'title' => t('Avatar'),
-    'field' => [
-      'id' => 'fitbit_avatar',
-    ],
-  ];
-
-  // Filter by Drupal uid
-  $data['fitbit_profile']['uid'] = [
-    'title' => t('User id'),
-    'help' => t('Drupal user id, not to be confused with Fitbit profile id.'),
-    'field' => [
-      'id' => 'standard',
-    ],
-    'filter' => [
-      'id' => 'fitbit_uid',
-    ],
-    'relationship' => [
-      'title' => 'Drupal user',
-      'help' => 'The Drupal user corresponding to this Fitbit profile',
-      'label' => 'drupal user',
-    ],
-  ];
-
-  // Define a base table for daily activity summary
-  $data['fitbit_daily_activity']['table']['group'] = t('Fitbit daily activity');
-  $data['fitbit_daily_activity']['table']['base'] = [
-    'title' => t('Fitbit daily activity'),
-    'query_id' => 'fitbit',
-    'help' => t('Fitbit daily activity.'),
-    'defaults' => [
-      // Default to the steps field.
-      'field' => 'steps',
-    ],
-  ];
+    // Tack on the default uid
+    // Filter by Drupal uid
+    $data['fitbit_' . $plugin_id]['uid'] = [
+      'title' => t('User id'),
+      'help' => t('Drupal user id, not to be confused with Fitbit profile id.'),
+      'field' => [
+        'id' => 'standard',
+      ],
+      'filter' => [
+        'id' => 'fitbit_uid',
+      ],
+    ];
+  }
 
   return $data;
 }
