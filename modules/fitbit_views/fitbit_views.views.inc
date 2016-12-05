@@ -13,7 +13,8 @@ function fitbit_views_views_data() {
   $data['fitbit_profile']['table']['group'] = t('Fitbit profile');
   $data['fitbit_profile']['table']['base'] = [
     'title' => t('Fitbit profile'),
-    'query_id' => 'fitbit_profile',
+    'query_id' => 'fitbit',
+    'fitbit_base_table_endpoint_id' => 'profile',
     'help' => t('Fitbit profile query builder.'),
     'defaults' => [
       // Default to the display_name field.
@@ -83,6 +84,23 @@ function fitbit_views_views_data() {
     ],
     'filter' => [
       'id' => 'fitbit_uid',
+    ],
+    'relationship' => [
+      'title' => 'Drupal user',
+      'help' => 'The Drupal user corresponding to this Fitbit profile',
+      'label' => 'drupal user',
+    ],
+  ];
+
+  // Define a base table for daily activity summary
+  $data['fitbit_daily_activity']['table']['group'] = t('Fitbit daily activity');
+  $data['fitbit_daily_activity']['table']['base'] = [
+    'title' => t('Fitbit daily activity'),
+    'query_id' => 'fitbit',
+    'help' => t('Fitbit daily activity.'),
+    'defaults' => [
+      // Default to the steps field.
+      'field' => 'steps',
     ],
   ];
 

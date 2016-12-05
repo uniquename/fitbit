@@ -5,24 +5,28 @@ namespace Drupal\fitbit_views\Plugin\views\query;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\fitbit\FitbitAccessTokenManager;
 use Drupal\fitbit\FitbitClient;
+use Drupal\fitbit_views\FitbitBaseTableEndpointInterface;
+use Drupal\fitbit_views\FitbitBaseTableEndpointPluginManager;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
+use Drupal\views\Views;
+use Drupal\views\ViewsData;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Fitbit profile views query plugin which wraps calls to the Fitbit API's
- * profile resource in order to expose the results to views.
+ * Fitbit views query plugin which wraps calls to the Fitbit API in order to
+ * expose the results to views.
  *
  * @ingroup views_query_plugins
  *
  * @ViewsQuery(
- *   id = "fitbit_profile",
- *   title = @Translation("Fitbit profile"),
- *   help = @Translation("Query against the Fitbit API's profile resource.")
+ *   id = "fitbit",
+ *   title = @Translation("Fitbit"),
+ *   help = @Translation("Query against the Fitbit API.")
  * )
  */
-class FitbitProfile extends QueryPluginBase {
+class Fitbit extends QueryPluginBase {
 
   /**
    * Fitbit client.
@@ -39,18 +43,27 @@ class FitbitProfile extends QueryPluginBase {
   protected $fitbitAccessTokenManager;
 
   /**
-   * FitbitProfile constructor.
+   * Fitbit base table endpoint plugin manager.
+   *
+   * @var \Drupal\fitbit_views\FitbitBaseTableEndpointPluginManager
+   */
+  protected $fitbitBaseTableEndpointPluginManager;
+
+  /**
+   * Fitbit constructor.
    *
    * @param array $configuration
    * @param string $plugin_id
    * @param mixed $plugin_definition
    * @param FitbitClient $fitbit_client
    * @param FitbitAccessTokenManager $fitbit_access_token_manager
+   * @param FitbitBaseTableEndpointPluginManager $fitbit_base_table_endpoint_plugin_manager
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, FitbitClient $fitbit_client, FitbitAccessTokenManager $fitbit_access_token_manager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, FitbitClient $fitbit_client, FitbitAccessTokenManager $fitbit_access_token_manager, FitbitBaseTableEndpointPluginManager $fitbit_base_table_endpoint_plugin_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->fitbitClient = $fitbit_client;
     $this->fitbitAccessTokenManager = $fitbit_access_token_manager;
+    $this->fitbitBaseTableEndpointPluginManager = $fitbit_base_table_endpoint_plugin_manager;
   }
 
   /**
@@ -62,7 +75,8 @@ class FitbitProfile extends QueryPluginBase {
       $plugin_id,
       $plugin_definition,
       $container->get('fitbit.client'),
-      $container->get('fitbit.access_token_manager')
+      $container->get('fitbit.access_token_manager'),
+      $container->get('plugin.manager.fitbit_base_table_endpoints')
     );
   }
 
@@ -114,30 +128,27 @@ class FitbitProfile extends QueryPluginBase {
    */
   public function execute(ViewExecutable $view) {
     // Set the units according to the setting on the view.
+    // @todo this probably belongs per endpoint somehow.
     if (!empty($this->options['accept_lang'])) {
       $this->fitbitClient->setAcceptLang($this->options['accept_lang']);
     }
 
     // Grab data regarding conditions placed on the query.
     $query = $view->build_info['query'];
-    $access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken(empty($query['uid']) ? NULL : [$query['uid']]);
-    $index = 0;
-    foreach ($access_tokens as $access_token) {
-      if ($fitbit_user = $this->fitbitClient->getResourceOwner($access_token)) {
-        $user_data = $fitbit_user->toArray();
-        // The index key is very important. Views uses this to look up values
-        // for each row. Without it, views won't show any of your result rows.
-        $row['index'] = $index++;
-        $row['display_name'] = $user_data['displayName'];
-        $row['average_daily_steps'] = $user_data['averageDailySteps'];
-        $row['weight'] = $user_data['weight'];
-        $row['height'] = $user_data['height'];
-        $row['top_badges'] = $user_data['topBadges'];
-        $row['avatar'] = [
-          'avatar' => $user_data['avatar'],
-          'avatar150' => $user_data['avatar150'],
-        ];
-        $view->result[] = new ResultRow($row);
+    if ($access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken(empty($query['uid']) ? NULL : [$query['uid']])) {
+      // Need the data about the table to know which endpoint to use.
+      $views_data = Views::viewsData()->get($this->table);
+      /** @var FitbitBaseTableEndpointInterface $fitbit_endpoint */
+      $fitbit_endpoint = $this->fitbitBaseTableEndpointPluginManager->createInstance($views_data['table']['base']['fitbit_base_table_endpoint_id']);
+
+      $index = 0;
+      foreach ($access_tokens as $uid => $access_token) {
+        if ($row = $fitbit_endpoint->getRowByAccessToken($access_token)) {
+          $row->index = $index++;
+          $row->uid = $uid;
+
+          $view->result[] = $row;
+        }
       }
     }
   }
