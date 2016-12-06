@@ -4,6 +4,7 @@ namespace Drupal\fitbit;
 
 use djchen\OAuth2\Client\Provider\Fitbit;
 use djchen\OAuth2\Client\Provider\FitbitUser;
+use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use League\OAuth2\Client\Token\AccessToken;
@@ -64,7 +65,7 @@ class FitbitClient extends Fitbit {
    * @param AccessToken $access_token
    *   Fitbit AccessToken object.
    *
-   * @return mixed
+   * @return mixed|null
    */
   public function getBadges(AccessToken $access_token) {
     return $this->request('/1/user/-/badges.json', $access_token);
@@ -117,8 +118,9 @@ class FitbitClient extends Fitbit {
    * @param AccessToken $access_token
    *   Fitbit AccessToken object.
    *
-   * @return mixed
-   *   API response.
+   * @return mixed|null
+   *   API response or null in the case of an exception, which can happen if the
+   *   user did not authorize the resource being requested.
    */
   public function request($resource, AccessToken $access_token) {
     $options = [];
@@ -136,7 +138,23 @@ class FitbitClient extends Fitbit {
       return $this->getResponse($request);
     }
     catch (IdentityProviderException $e) {
-      watchdog_exception('fitbit', $e);
+      $log_level = RfcLogLevel::ERROR;
+      // Look through the errors reported in the response body. If the only
+      // error was an insufficient_scope error, report as a notice.
+      $parsed = $this->parseResponse($e->getResponseBody());
+      if (!empty($parsed['errors'])) {
+        $error_types = [];
+        foreach ($parsed['errors'] as $error) {
+          if (isset($error['errorType'])) {
+            $error_types[] = $error['errorType'];
+          }
+        }
+        $error_types = array_unique($error_types);
+        if (count($error_types) === 1 && reset($error_types) === 'insufficient_scope') {
+          $log_level = RfcLogLevel::NOTICE;
+        }
+      }
+      watchdog_exception('fitbit', $e, NULL, [], $log_level);
     }
   }
 
