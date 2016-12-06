@@ -81,21 +81,29 @@ class UserSettings extends FormBase {
     // Attempt to get the Fitibit account. If the account is properly linked,
     // this will return a result which we'll use to present some of the users
     // stats.
-    if (($access_token = $this->fitbitAccessTokenManager->loadAccessToken($user->id())) && ($fitbit_user = $this->fitbitClient->getResourceOwner($access_token))) {
-      $user_data = $fitbit_user->toArray();
+    if ($access_token = $this->fitbitAccessTokenManager->loadAccessToken($user->id())) {
 
-      $form['authenticated'] = [
-        '#markup' => $this->t('<p>You\'re authenticated. Welcome @name.</p>', ['@name' => $fitbit_user->getDisplayName()]),
-      ];
-      if (!empty($user_data['avatar150'])) {
-        $form['avatar'] = [
-          '#theme' => 'image',
-          '#uri' => $user_data['avatar150'],
+      if ($fitbit_user = $this->fitbitClient->getResourceOwner($access_token)) {
+        $user_data = $fitbit_user->toArray();
+
+        $form['authenticated'] = [
+          '#markup' => $this->t('<p>You\'re authenticated. Welcome @name.</p>', ['@name' => $fitbit_user->getDisplayName()]),
         ];
+        if (!empty($user_data['avatar150'])) {
+          $form['avatar'] = [
+            '#theme' => 'image',
+            '#uri' => $user_data['avatar150'],
+          ];
+        }
+        if (!empty($user_data['averageDailySteps'])) {
+          $form['avg_steps'] = [
+            '#markup' => $this->t('<p><strong>Average daily steps:</strong> @steps</p>', ['@steps' => $user_data['averageDailySteps']]),
+          ];
+        }
       }
-      if (!empty($user_data['averageDailySteps'])) {
-        $form['avg_steps'] = [
-          '#markup' => $this->t('<p><strong>Average daily steps:</strong> @steps</p>', ['@steps' => $user_data['averageDailySteps']]),
+      else {
+        $form['authenticated'] = [
+          '#markup' => $this->t('<p>You\'re authenticated.</p>'),
         ];
       }
 

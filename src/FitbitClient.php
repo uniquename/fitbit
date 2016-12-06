@@ -50,11 +50,12 @@ class FitbitClient extends Fitbit {
    * @param AccessToken $access_token
    *   Fitbit AccessToken object.
    *
-   * @return FitbitUser
+   * @return FitbitUser|null
    */
   public function getResourceOwner(AccessToken $access_token) {
-    $response = $this->request('/1/user/-/profile.json', $access_token);
-    return new FitbitUser($response);
+    if ($response = $this->request('/1/user/-/profile.json', $access_token)) {
+      return new FitbitUser($response);
+    }
   }
 
   /**
