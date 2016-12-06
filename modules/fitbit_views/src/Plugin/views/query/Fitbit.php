@@ -50,6 +50,14 @@ class Fitbit extends QueryPluginBase {
   protected $fitbitBaseTableEndpointPluginManager;
 
   /**
+   * Array of relationships. Each array entry should be a
+   * FitBitBaseTableEndpoint plugin_id.
+   *
+   * @var string[]
+   */
+  protected $relationships;
+
+  /**
    * Fitbit constructor.
    *
    * @param array $configuration
@@ -64,6 +72,7 @@ class Fitbit extends QueryPluginBase {
     $this->fitbitClient = $fitbit_client;
     $this->fitbitAccessTokenManager = $fitbit_access_token_manager;
     $this->fitbitBaseTableEndpointPluginManager = $fitbit_base_table_endpoint_plugin_manager;
+    $this->relationships = [];
   }
 
   /**
@@ -141,16 +150,31 @@ class Fitbit extends QueryPluginBase {
       $base_table = $this->view->storage->get('base_table');
       $base_table_data = $views_data->get($base_table);
 
-      /** @var FitbitBaseTableEndpointInterface $fitbit_endpoint */
-      $fitbit_endpoint = $this->fitbitBaseTableEndpointPluginManager->createInstance($base_table_data['table']['base']['fitbit_base_table_endpoint_id']);
+      // Here we combine the base_table_endpoint_id of the base table with any
+      // added via relatiionships. Since all relationships defined by
+      // fitbit_views module are bi-directional, we use array_unique to ensure
+      // that we only ever hit each endpoint once. Unlike a SQL relationship
+      // there is no distinction between a relationship one vertex away and a
+      // relationship n verticies away.
+      $fitbit_endpoint_ids = array_unique(array_merge([$base_table_data['table']['base']['fitbit_base_table_endpoint_id']], $this->relationships));
       $index = 0;
       foreach ($access_tokens as $uid => $access_token) {
-        if ($row = $fitbit_endpoint->getRowByAccessToken($access_token)) {
-          // The index key is very important. Views uses this to look up values
-          // for each row. Without it, views won't show any of your result rows.
-          $row->index = $index++;
-          $row->uid = $uid;
-          $view->result[] = $row;
+        $row = [];
+        foreach ($fitbit_endpoint_ids as $fitbit_endpoint_id) {
+          /** @var FitbitBaseTableEndpointInterface $fitbit_endpoint */
+          $fitbit_endpoint = $this->fitbitBaseTableEndpointPluginManager->createInstance($fitbit_endpoint_id);
+          if ($data = $fitbit_endpoint->getRowByAccessToken($access_token)) {
+            // The index key is very important. Views uses this to look up values
+            // for each row. Without it, views won't show any of your result rows.
+            $row = array_merge($row, $data);
+          }
+        }
+        // If we got some data back from the API for this user, add defaults and
+        // expose as a row to views.
+        if (!empty($row)) {
+          $row['index'] = $index++;
+          $row['uid'] = $uid;
+          $view->result[] = new ResultRow($row);
         }
       }
     }
@@ -223,6 +247,18 @@ class Fitbit extends QueryPluginBase {
       '#default_value' => $this->options['accept_lang'],
       '#description' => $this->t('Set the unit system to use for FitbitAPI requests.'),
     ];
+  }
+
+  /**
+   * Add a relationship. For Fitbit views query backends, a relationship
+   * corresponds to a FitbitBaseTableEndpoint plugin_id, which will be used to
+   * fetch rows from that endpoint in addition to the base table requested.
+   *
+   * @param string $endpoint_plugin_id
+   *   Plugin id for a FitbitBaseTableEndpoint plugin.
+   */
+  public function addRelationship($endpoint_plugin_id) {
+    $this->relationships[] = $endpoint_plugin_id;
   }
 
   /**

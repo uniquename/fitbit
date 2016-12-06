@@ -3,7 +3,6 @@
 namespace Drupal\fitbit_views\Plugin\FitbitBaseTableEndpoint;
 
 use Drupal\fitbit_views\FitbitBaseTableEndpointBase;
-use Drupal\views\ResultRow;
 use League\OAuth2\Client\Token\AccessToken;
 
 /**
@@ -33,7 +32,7 @@ class Profile extends FitbitBaseTableEndpointBase {
       ];
       unset($data['avatar150']);
 
-      return new ResultRow($data);
+      return $data;
     }
   }
 

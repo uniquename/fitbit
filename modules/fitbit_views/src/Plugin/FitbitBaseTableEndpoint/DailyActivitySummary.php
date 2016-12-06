@@ -3,7 +3,6 @@
 namespace Drupal\fitbit_views\Plugin\FitbitBaseTableEndpoint;
 
 use Drupal\fitbit_views\FitbitBaseTableEndpointBase;
-use Drupal\views\ResultRow;
 use League\OAuth2\Client\Token\AccessToken;
 
 /**
@@ -23,8 +22,7 @@ class DailyActivitySummary extends FitbitBaseTableEndpointBase {
    */
   public function getRowByAccessToken(AccessToken $access_token) {
     if ($data = $this->fitbitClient->getDailyActivitySummary($access_token)) {
-      $data = $this->filterArrayByPath($data, array_keys($this->getFields()));
-      return new ResultRow($data);
+      return $this->filterArrayByPath($data, array_keys($this->getFields()));
     }
   }
 

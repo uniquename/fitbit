@@ -4,7 +4,6 @@ namespace Drupal\fitbit_views;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use League\OAuth2\Client\Token\AccessToken;
-use Drupal\views\ResultRow;
 
 /**
  * Defines an interface for Fitbit base table endpoint plugins.
@@ -44,7 +43,7 @@ interface FitbitBaseTableEndpointInterface extends PluginInspectionInterface {
    *   Oauth access token object. Make the request on behalf of the user
    *   represented by the token.
    *
-   * @return ResultRow|null
+   * @return array|null
    */
   public function getRowByAccessToken(AccessToken $access_token);
 
