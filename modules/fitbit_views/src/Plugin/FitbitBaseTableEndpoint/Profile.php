@@ -32,6 +32,9 @@ class Profile extends FitbitBaseTableEndpointBase {
       ];
       unset($data['avatar150']);
 
+      // Change memberSince to timestamp
+      $data['memberSince'] = strtotime($data['memberSince']);
+
       return $data;
     }
   }
@@ -49,27 +52,9 @@ class Profile extends FitbitBaseTableEndpointBase {
       'id' => 'standard',
     ];
     return [
-      'displayName' => [
-        'title' => $this->t('Display name'),
-        'field' => $standard,
-      ],
-      'averageDailySteps' => [
-        'title' => $this->t('Average daily steps'),
+      'age' => [
+        'title' => $this->t('Age'),
         'field' => $integer,
-      ],
-      'weight' => [
-        'title' => $this->t('Weight'),
-        'field' => $float,
-      ],
-      'height' => [
-        'title' => $this->t('Height'),
-        'field' => $float,
-      ],
-      'topBadges' => [
-        'title' => $this->t('Top badges'),
-        'field' => [
-          'id' => 'fitbit_badges',
-        ],
       ],
       'avatar' => [
         'title' => $this->t('Avatar'),
@@ -79,6 +64,54 @@ class Profile extends FitbitBaseTableEndpointBase {
       ],
       // We don't want to bubble this up to views.
       'avatar150' => NULL,
+      'averageDailySteps' => [
+        'title' => $this->t('Average daily steps'),
+        'field' => $integer,
+      ],
+      'country' => [
+        'title' => $this->t('Country'),
+        'field' => $standard,
+      ],
+      'dateOfBirth' => [
+        'title' => $this->t('Date of birth'),
+        'field' => $standard,
+      ],
+      'displayName' => [
+        'title' => $this->t('Display name'),
+        'field' => $standard,
+      ],
+      'fullName' => [
+        'title' => $this->t('Full name'),
+        'field' => $standard,
+      ],
+      'gender' => [
+        'title' => $this->t('Gender'),
+        'field' => $standard,
+      ],
+      'height' => [
+        'title' => $this->t('Height'),
+        'field' => $float,
+      ],
+      'memberSince' => [
+        'title' => $this->t('Member since'),
+        'field' => [
+          'id' => 'date',
+        ],
+      ],
+      'timezone' => [
+        'title' => $this->t('Timezone'),
+        'field' => $standard,
+      ],
+      'topBadges' => [
+        'title' => $this->t('Top badges'),
+        'field' => [
+          'id' => 'fitbit_badges',
+        ],
+      ],
+      'weight' => [
+        'title' => $this->t('Weight'),
+        'field' => $float,
+      ],
     ];
   }
 }
