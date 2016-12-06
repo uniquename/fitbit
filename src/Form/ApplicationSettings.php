@@ -39,7 +39,7 @@ class ApplicationSettings extends ConfigFormBase {
   <li>Go to https://dev.fitbit.com/apps and click on the name of your application.</li>
   <li>Copy and paste the OAuth 2.0 Client ID and Client Secret into the fields below.</li>
   <li>Save the settings.</li>
-  <li>Instruct your users to visit <em>/user/<uid>/fitbit</em> and follow the steps there to connect their Fitbit accounts.</li>
+  <li>Instruct your users to visit <em>/user/[uid]/fitbit</em> and follow the steps there to connect their Fitbit accounts.</li>
   <li>At this point you should be able to build views with the Fitbit views module, or otherwise use the services provided if your a module developer basing your code on fitbit module.</li>
 </ol>
 INSTRUCTIONS;
