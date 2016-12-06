@@ -173,4 +173,13 @@ class FitbitClient extends Fitbit {
       'en_GB' => $this->t('UK'),
     ];
   }
+
+  /**
+   * Set the redirect URI for authorization requests.
+   *
+   * @param $redirect_uri
+   */
+  public function setRedirectUri($redirect_uri) {
+    $this->redirectUri = $redirect_uri;
+  }
 }

@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
 use Drupal\fitbit\FitbitAccessTokenManager;
 use Drupal\fitbit\FitbitClient;
 use Drupal\user\PrivateTempStoreFactory;
@@ -132,6 +133,7 @@ class UserSettings extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $this->fitbitClient->setRedirectUri(Url::fromRoute('fitbit.authorization', [], ['absolute' => TRUE])->toString());
     $authorization_url = $this->fitbitClient->getAuthorizationUrl();
     $this->tempStore->set('state', $this->fitbitClient->getState());
     $form_state->setResponse(new TrustedRedirectResponse($authorization_url, 302));
