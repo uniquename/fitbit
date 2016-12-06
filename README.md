@@ -66,3 +66,8 @@ To use views to show connected users' Fitbit data, enable the Fitbit views
 3. Under View Settings, choose one of the Fitbit data types for the 'Show' 
 dropdown.
 4. Continue as usual to create a view of Fitbit data.
+5. Note that you can combine data from different Fitbit data types (
+corresponding to the endpoints exposed by Fitbit APIs) by adding a Relationship.
+Add a relationship in the usual way to be able to add more data per user.
+6. If you know of a Fitbit endpoint that is not covered by the views 
+integration, log an issue https://www.drupal.org/project/issues/fitbit.
