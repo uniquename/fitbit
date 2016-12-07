@@ -3,6 +3,7 @@
 namespace Drupal\fitbit;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Url;
 
 class FitbitClientFactory {
 
@@ -18,6 +19,7 @@ class FitbitClientFactory {
     $options = [
       'clientId' => $config->get('client_id'),
       'clientSecret' => $config->get('client_secret'),
+      'redirectUri' => Url::fromRoute('fitbit.authorization', [], ['absolute' => TRUE])->toString(),
     ];
     return new FitbitClient($options);
   }

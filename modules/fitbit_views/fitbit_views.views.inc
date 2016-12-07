@@ -9,8 +9,6 @@
  * Implements hook_views_data().
  */
 function fitbit_views_views_data() {
-  $data = [];
-
   /** @var \Drupal\fitbit_views\FitbitBaseTableEndpointPluginManager $fitbit_base_table_endpoint_manager */
   $fitbit_base_table_endpoint_manager = \Drupal::service('plugin.manager.fitbit_base_table_endpoints');
   $plugin_definitions = $fitbit_base_table_endpoint_manager->getDefinitions();
