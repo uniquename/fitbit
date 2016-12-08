@@ -11,7 +11,6 @@ use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
 use Drupal\views\Views;
-use Drupal\views\ViewsData;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

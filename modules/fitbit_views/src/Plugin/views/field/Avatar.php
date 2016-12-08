@@ -7,9 +7,7 @@ use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
 
 /**
- * Class Avatar
- *
- * @ingroup views_field_handlers
+ * Avatar views field plugin.
  *
  * @ViewsField("fitbit_avatar")
  */
