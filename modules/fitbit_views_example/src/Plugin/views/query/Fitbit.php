@@ -80,7 +80,10 @@ class Fitbit extends QueryPluginBase {
 
           $row['display_name'] = $data['displayName'];
           $row['average_daily_steps'] = $data['averageDailySteps'];
-          $row['avatar'] = $data['avatar'];
+          $row['avatar'] = [
+            'avatar' => $data['avatar'],
+            'avatar150' => $data['avatar150'],
+          ];
           $row['height'] = $data['height'];
           // 'index' key is required.
           $row['index'] = $index++;
