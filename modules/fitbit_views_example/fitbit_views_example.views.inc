@@ -43,6 +43,14 @@ function fitbit_views_example_views_data() {
       'id' => 'fitbit_avatar',
     ],
   ];
+  $data['fitbit_profile']['height'] = [
+    'title' => t('Height'),
+    'help' => t('Fibit users\'s height.'),
+    'field' => [
+      'id' => 'numeric',
+      'float' => TRUE,
+    ],
+  ];
 
   return $data;
 }

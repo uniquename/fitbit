@@ -2,12 +2,12 @@
 
 namespace Drupal\fitbit_views_example\Plugin\views\query;
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\fitbit\FitbitAccessTokenManager;
 use Drupal\fitbit\FitbitClient;
 use Drupal\views\Plugin\views\query\QueryPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
-use Drupal\views\Views;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -68,6 +68,10 @@ class Fitbit extends QueryPluginBase {
    * {@inheritdoc}
    */
   public function execute(ViewExecutable $view) {
+    // Set the units according to the setting on the view.
+    if (!empty($this->options['accept_lang'])) {
+      $this->fitbitClient->setAcceptLang($this->options['accept_lang']);
+    }
     if ($access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken()) {
       $index = 0;
       foreach ($access_tokens as $uid => $access_token) {
@@ -77,12 +81,44 @@ class Fitbit extends QueryPluginBase {
           $row['display_name'] = $data['displayName'];
           $row['average_daily_steps'] = $data['averageDailySteps'];
           $row['avatar'] = $data['avatar'];
+          $row['height'] = $data['height'];
           // 'index' key is required.
           $row['index'] = $index++;
           $view->result[] = new ResultRow($row);
         }
       }
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function defineOptions() {
+    $options = parent::defineOptions();
+    $options['accept_lang'] = array(
+      'default' => NULL,
+    );
+
+    return $options;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildOptionsForm(&$form, FormStateInterface $form_state) {
+    parent::buildOptionsForm($form, $form_state);
+
+    $form['accept_lang'] = [
+      '#type' => 'select',
+      '#options' => [
+        '' => $this->t('Metric'),
+        'en_US' => $this->t('US'),
+        'en_GB' => $this->t('UK'),
+      ],
+      '#title' => $this->t('Unit system'),
+      '#default_value' => $this->options['accept_lang'],
+      '#description' => $this->t('Set the unit system to use for Fitbit API requests.'),
+    ];
   }
 
   /**
