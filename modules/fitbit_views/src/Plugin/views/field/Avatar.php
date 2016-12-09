@@ -24,6 +24,9 @@ class Avatar extends FieldPluginBase {
     return $options;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function buildOptionsForm(&$form, FormStateInterface $form_state) {
     $form['avatar_size'] = [
       '#type' => 'select',
