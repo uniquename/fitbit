@@ -116,6 +116,27 @@ class Fitbit extends QueryPluginBase {
         }
       }
     }
+
+    // Do a default sort by average daily steps. This would be better suited as
+    // a Views sort plugin, but we'll keep it simple for now
+    if (!empty($view->result)) {
+      usort($view->result, function ($a, $b) {
+        if ($a->average_daily_steps < $b->average_daily_steps) {
+          return 1;
+        }
+        else if ($a->average_daily_steps > $b->average_daily_steps) {
+          return -1;
+        }
+        else {
+          return 0;
+        }
+      });
+      // Re-index array
+      $index = 0;
+      foreach ($view->result as &$row) {
+        $row->index = $index++;
+      }
+    }
   }
 
   /**
