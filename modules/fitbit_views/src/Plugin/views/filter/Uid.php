@@ -6,14 +6,11 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\views\Plugin\views\filter\FilterPluginBase;
 
 /**
- * Simple filter to handle filtering Fitbit results by uid. Very basic filter
- * that only allows equals operator.
- *
- * @ingroup views_filter_handlers
+ * Simple filter to handle filtering Fitbit results by uid.
  *
  * @ViewsFilter("fitbit_uid")
  */
-class Uid extends FilterPluginBase  {
+class Uid extends FilterPluginBase {
 
   public $no_operator = TRUE;
 

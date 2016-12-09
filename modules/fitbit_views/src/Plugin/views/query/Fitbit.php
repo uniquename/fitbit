@@ -57,6 +57,13 @@ class Fitbit extends QueryPluginBase {
   protected $relationships;
 
   /**
+   * Collection of filter criteria.
+   *
+   * @var array
+   */
+  protected $where;
+
+  /**
    * Fitbit constructor.
    *
    * @param array $configuration
@@ -116,12 +123,13 @@ class Fitbit extends QueryPluginBase {
 
     // Iterate over $this->where to gather up the filtering conditions to pass
     // along to the API. Note that views allows grouping of conditions, as well
-    // as group operators. This does not apply to us, as I believe any filters
-    // that work together automatically assume AND.
+    // as group operators. This does not apply to us, as the Fitbit API has no
+    // such concept, nor do we support this concept for filtering connected
+    // Fitbit Drupal users.
     if (isset($this->where)) {
       foreach ($this->where as $where_group => $where) {
         foreach ($where['conditions'] as $condition) {
-          // Remove dot from beggining of the string.
+          // Remove dot from begining of the string.
           $field_name = ltrim($condition['field'], '.');
           $query[$field_name] = $condition['value'];
         }
@@ -213,11 +221,11 @@ class Fitbit extends QueryPluginBase {
       $this->setWhereGroup('AND', $group);
     }
 
-    $this->where[$group]['conditions'][] = array(
+    $this->where[$group]['conditions'][] = [
       'field' => $field,
       'value' => $value,
       'operator' => $operator,
-    );
+    ];
   }
 
   /**
