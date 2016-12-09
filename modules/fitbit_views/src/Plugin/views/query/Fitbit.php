@@ -136,7 +136,6 @@ class Fitbit extends QueryPluginBase {
    */
   public function execute(ViewExecutable $view) {
     // Set the units according to the setting on the view.
-    // @todo this probably belongs per endpoint somehow.
     if (!empty($this->options['accept_lang'])) {
       $this->fitbitClient->setAcceptLang($this->options['accept_lang']);
     }
@@ -244,7 +243,7 @@ class Fitbit extends QueryPluginBase {
       '#options' => $this->fitbitClient->getAcceptLangOptions(),
       '#title' => $this->t('Unit system'),
       '#default_value' => $this->options['accept_lang'],
-      '#description' => $this->t('Set the unit system to use for FitbitAPI requests.'),
+      '#description' => $this->t('Set the unit system to use for Fitbit API requests.'),
     ];
   }
 
