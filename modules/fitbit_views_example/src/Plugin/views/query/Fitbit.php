@@ -95,8 +95,8 @@ class Fitbit extends QueryPluginBase {
     }
     // We currently only support uid, ignore any other filters that may be
     // configured.
-    $uid = isset($filters['uid']) ? $filters['uid'] : NULL;
-    if ($access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken([$uid])) {
+    $uids = isset($filters['uid']) ? [$filters['uid']] : NULL;
+    if ($access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken($uids)) {
       $index = 0;
       foreach ($access_tokens as $uid => $access_token) {
         if ($data = $this->fitbitClient->getResourceOwner($access_token)) {
