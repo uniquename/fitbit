@@ -37,6 +37,13 @@ class Fitbit extends QueryPluginBase {
   protected $fitbitAccessTokenManager;
 
   /**
+   * Collection of filter criteria.
+   *
+   * @var array
+   */
+  protected $where;
+
+  /**
    * Fitbit constructor.
    *
    * @param array $configuration
@@ -72,7 +79,24 @@ class Fitbit extends QueryPluginBase {
     if (!empty($this->options['accept_lang'])) {
       $this->fitbitClient->setAcceptLang($this->options['accept_lang']);
     }
-    if ($access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken()) {
+    // Check if we have a filter. Iterate over $this->where to gather up the
+    // filtering conditions to pass along to the API. Note that views allows
+    // grouping of conditions, as well as group operators. This does not apply
+    // to us, as the Fitbit API has no such concept, nor do we support this
+    // concept for filtering connected Fitbit Drupal users.
+    if (isset($this->where)) {
+      foreach ($this->where as $where_group => $where) {
+        foreach ($where['conditions'] as $condition) {
+          // Remove dot from begining of the string.
+          $field_name = ltrim($condition['field'], '.');
+          $filters[$field_name] = $condition['value'];
+        }
+      }
+    }
+    // We currently only support uid, ignore any other filters that may be
+    // configured.
+    $uid = isset($filters['uid']) ? $filters['uid'] : NULL;
+    if ($access_tokens = $this->fitbitAccessTokenManager->loadMultipleAccessToken([$uid])) {
       $index = 0;
       foreach ($access_tokens as $uid => $access_token) {
         if ($data = $this->fitbitClient->getResourceOwner($access_token)) {
@@ -85,12 +109,55 @@ class Fitbit extends QueryPluginBase {
             'avatar150' => $data['avatar150'],
           ];
           $row['height'] = $data['height'];
+          $row['uid'] = $uid;
           // 'index' key is required.
           $row['index'] = $index++;
           $view->result[] = new ResultRow($row);
         }
       }
     }
+  }
+
+  /**
+   * Adds a simple condition to the query. Collect data on the configured filter
+   * criteria so that we can appropriately apply it in the query() and execute()
+   * methods.
+   *
+   * @param $group
+   *   The WHERE group to add these to; groups are used to create AND/OR
+   *   sections. Groups cannot be nested. Use 0 as the default group.
+   *   If the group does not yet exist it will be created as an AND group.
+   * @param $field
+   *   The name of the field to check.
+   * @param $value
+   *   The value to test the field against. In most cases, this is a scalar. For more
+   *   complex options, it is an array. The meaning of each element in the array is
+   *   dependent on the $operator.
+   * @param $operator
+   *   The comparison operator, such as =, <, or >=. It also accepts more
+   *   complex options such as IN, LIKE, LIKE BINARY, or BETWEEN. Defaults to =.
+   *   If $field is a string you have to use 'formula' here.
+   *
+   * @see \Drupal\Core\Database\Query\ConditionInterface::condition()
+   * @see \Drupal\Core\Database\Query\Condition
+   */
+  public function addWhere($group, $field, $value = NULL, $operator = NULL) {
+    // Ensure all variants of 0 are actually 0. Thus '', 0 and NULL are all
+    // the default group.
+    if (empty($group)) {
+      $group = 0;
+    }
+
+    // Check for a group.
+    if (!isset($this->where[$group])) {
+      $this->setWhereGroup('AND', $group);
+    }
+
+    $this->where[$group]['conditions'][] = [
+      'field' => $field,
+      'value' => $value,
+      'operator' => $operator,
+    ];
   }
 
   /**

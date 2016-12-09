@@ -51,6 +51,16 @@ function fitbit_views_example_views_data() {
       'float' => TRUE,
     ],
   ];
+  $data['fitbit_profile']['uid'] = [
+    'title' => t('User id'),
+    'help' => t('Drupal user id, not to be confused with Fitbit profile id.'),
+    'field' => [
+      'id' => 'standard',
+    ],
+    'filter' => [
+      'id' => 'fitbit_uid',
+    ],
+  ];
 
   return $data;
 }
