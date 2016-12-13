@@ -31,7 +31,7 @@ class ActivityTimeSeries extends FitbitBaseTableEndpointBase {
             $sum += $value['value'];
           }
         }
-        return ['steps' => $sum];
+        return ['activity_sum' => $sum];
       }
     }
   }
@@ -41,8 +41,8 @@ class ActivityTimeSeries extends FitbitBaseTableEndpointBase {
    */
   public function getFields() {
     return [
-      'steps' => [
-        'title' => $this->t('Steps'),
+      'activity_sum' => [
+        'title' => $this->t('Activity sum'),
         'field' => [
           'id' => 'numeric',
         ],
