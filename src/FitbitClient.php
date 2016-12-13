@@ -97,18 +97,26 @@ class FitbitClient extends Fitbit {
    *   One of the allowable resource paths accepted by the Fitbit API, for
    *   example, activities/steps. For the full list, see
    *   https://dev.fitbit.com/docs/activity/#resource-path-options
-   * @param string $date
-   *   The end date of the period specified in the format yyyy-MM-dd or today.
-   * @param string $period
-   *   The range for which data will be returned. Options are 1d, 7d, 30d, 1w,
-   *   1m, 3m, 6m, 1y.
+   * @param array $activity_date_range
+   *   Associative array with keys. Use date + period for a period based range,
+   *   base_date and end_date for a specific date range:
+   *   - date
+   *   - period
+   *   - base_date
+   *   - end_date
+   *   See https://dev.fitbit.com/docs/activity/#activity-time-series for more details.
    *
    * @return mixed
    */
-  public function getActivityTimeSeries(AccessToken $access_token, $resource_path, $date = NULL, $period = NULL) {
-    isset($date) ?: $date = 'today';
-    isset($period) ?: $period = '7d';
-    return $this->request('/1/user/-/' . $resource_path . '/date/' . $date . '/' . $period . '.json', $access_token);
+  public function getActivityTimeSeries(AccessToken $access_token, $resource_path = NULL, $activity_date_range = []) {
+    isset($resource_path) ?: $resource_path = 'activities/steps';
+    if (!empty($activity_date_range['base_date']) && !empty($activity_date_range['end_date'])) {
+      $activity_date_range = $activity_date_range['base_date'] . '/' . $activity_date_range['end_date'];
+    }
+    else {
+      $activity_date_range = (isset($activity_date_range['date']) ? $activity_date_range['date'] : 'today') . '/' . (isset($activity_date_range['period']) ? $activity_date_range['period'] : '7d');
+    }
+    return $this->request('/1/user/-/' . $resource_path . '/date/' . $activity_date_range . '.json', $access_token);
   }
 
   /**

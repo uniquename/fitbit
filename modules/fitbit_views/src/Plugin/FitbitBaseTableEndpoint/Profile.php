@@ -20,7 +20,7 @@ class Profile extends FitbitBaseTableEndpointBase {
   /**
    * {@inheritdoc}
    */
-  public function getRowByAccessToken(AccessToken $access_token) {
+  public function getRowByAccessToken(AccessToken $access_token, $arguments = NULL) {
     if ($data = $this->fitbitClient->getResourceOwner($access_token)) {
       $data = $data->toArray();
       $data = $this->filterArrayByPath($data, array_keys($this->getFields()));

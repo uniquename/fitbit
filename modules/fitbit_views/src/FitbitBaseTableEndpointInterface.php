@@ -42,10 +42,13 @@ interface FitbitBaseTableEndpointInterface extends PluginInspectionInterface {
    * @param \League\OAuth2\Client\Token\AccessToken $access_token
    *   Oauth access token object. Make the request on behalf of the user
    *   represented by the token.
+   * @param array|null $arguments
+   *   Pass along any additional arguments, usually filter/sort params.
    *
    * @return array|null
+   *   Associative array keyed by views field name.
    */
-  public function getRowByAccessToken(AccessToken $access_token);
+  public function getRowByAccessToken(AccessToken $access_token, $arguments = NULL);
 
   /**
    * Inform views about the fields this endpoint exposes.

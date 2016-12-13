@@ -8,8 +8,6 @@ use Drupal\views\ResultRow;
 /**
  * Class Badges
  *
- * @ingroup views_field_handlers
- *
  * @ViewsField("fitbit_badges")
  */
 class Badges extends FieldPluginBase {

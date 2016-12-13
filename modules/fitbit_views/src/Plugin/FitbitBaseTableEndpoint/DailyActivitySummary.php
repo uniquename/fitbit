@@ -4,6 +4,7 @@ namespace Drupal\fitbit_views\Plugin\FitbitBaseTableEndpoint;
 
 use Drupal\fitbit_views\FitbitBaseTableEndpointBase;
 use League\OAuth2\Client\Token\AccessToken;
+use Symfony\Component\Validator\Constraints\Null;
 
 /**
  * Fitbit Daily Activity Summary endpoint.
@@ -20,7 +21,7 @@ class DailyActivitySummary extends FitbitBaseTableEndpointBase {
   /**
    * {@inheritdoc}
    */
-  public function getRowByAccessToken(AccessToken $access_token) {
+  public function getRowByAccessToken(AccessToken $access_token, $arguments = NULL) {
     if ($data = $this->fitbitClient->getDailyActivitySummary($access_token)) {
       return $this->filterArrayByPath($data, array_keys($this->getFields()));
     }

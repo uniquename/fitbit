@@ -169,7 +169,7 @@ class Fitbit extends QueryPluginBase {
         foreach ($fitbit_endpoint_ids as $fitbit_endpoint_id) {
           /** @var FitbitBaseTableEndpointInterface $fitbit_endpoint */
           $fitbit_endpoint = $this->fitbitBaseTableEndpointPluginManager->createInstance($fitbit_endpoint_id);
-          if ($data = $fitbit_endpoint->getRowByAccessToken($access_token)) {
+          if ($data = $fitbit_endpoint->getRowByAccessToken($access_token, $query)) {
             // The index key is very important. Views uses this to look up values
             // for each row. Without it, views won't show any of your result rows.
             $row = array_merge($row, $data);
