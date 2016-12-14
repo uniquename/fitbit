@@ -21,8 +21,8 @@ class ActivityTimeSeries extends FitbitBaseTableEndpointBase {
    */
   public function getRowByAccessToken(AccessToken $access_token, $arguments = NULL) {
     // Defaults
-    $resource_path = isset($arguments['resource_path']) ? $arguments['resource_path'] : NULL;
-    $activity_date_range = isset($arguments['activity_date_range']) ? $arguments['activity_date_range'] : NULL;
+    $resource_path = isset($arguments['resource_path']) ? $arguments['resource_path'] : 'activities/steps';
+    $activity_date_range = isset($arguments['activity_date_range']) ? $arguments['activity_date_range'] : ['date' => 'today', 'period' => '7d'];
     if ($data = $this->fitbitClient->getActivityTimeSeries($access_token, $resource_path, $activity_date_range)) {
       if (isset($data[str_replace('/', '-', $resource_path)])) {
         $sum = 0;
